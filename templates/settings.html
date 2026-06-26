@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+
+{% block title %}Settings – BlogNest{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block extra_css %}
+<style>
+.settings-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+/* ── Nav ─────────────────────────────────────────────── */
+.settings-nav {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    position: sticky;
+    top: calc(var(--topbar-height, 64px) + 24px);
+}
+
+.settings-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background var(--transition), color var(--transition), border-color var(--transition);
+    user-select: none;
+}
+
+.settings-nav-item:hover {
+    background: var(--bg-page);
+    color: var(--text-primary);
+}
+
+.settings-nav-item.active {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-left-color: var(--accent);
+    font-weight: 600;
+}
+
+.settings-nav-item i { width: 16px; text-align: center; font-size: 14px; }
+
+.settings-nav-divider {
+    border: none;
+    border-top: 1px solid var(--border-light);
+    margin: 4px 0;
+}
+
+/* ── Panels ──────────────────────────────────────────── */
+.settings-panel { display: flex; flex-direction: column; gap: 20px; }
+
+/* Each tab pane — hidden by default, shown when active */
+.tab-pane { display: none; flex-direction: column; gap: 20px; }
+.tab-pane.active { display: flex; }
+
+.settings-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.settings-section-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.settings-section-head i { color: var(--accent); font-size: 15px; }
+.settings-section-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+
+.settings-body { padding: 20px; }
+
+/* ── Form ────────────────────────────────────────────── */
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.form-group:last-child { margin-bottom: 0; }
+
+.form-label {
+    font-size: 12px; font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: .05em;
+}
+
+.form-input {
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 14px; color: var(--text-primary);
+    background: var(--bg-page); outline: none;
+    transition: border-color var(--transition);
+    font-family: inherit; width: 100%; box-sizing: border-box;
+}
+.form-input:focus { border-color: var(--accent); background: #fff; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.form-actions {
+    display: flex; gap: 10px;
+    margin-top: 20px; padding-top: 16px;
+    border-top: 1px solid var(--border-light);
+}
+
+/* ── Toggles ─────────────────────────────────────────── */
+.toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+.toggle-row:last-of-type { border-bottom: none; }
+.toggle-row:first-of-type { padding-top: 0; }
+
+.toggle-info { display: flex; flex-direction: column; gap: 2px; }
+.toggle-label { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+.toggle-desc  { font-size: 12px; color: var(--text-muted); }
+
+.toggle { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+
+.toggle-slider {
+    position: absolute; inset: 0;
+    background: var(--border); border-radius: 24px;
+    cursor: pointer; transition: background var(--transition);
+}
+.toggle-slider::before {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; left: 3px; top: 3px;
+    border-radius: 50%; background: #fff;
+    transition: transform var(--transition);
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.toggle input:checked + .toggle-slider { background: var(--accent); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+/* ── Privacy rows (same layout as toggle rows) ───────── */
+.privacy-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; border-bottom: 1px solid var(--border-light);
+}
+.privacy-row:last-child { border-bottom: none; }
+.privacy-select {
+    padding: 6px 10px; border: 1px solid var(--border);
+    border-radius: var(--radius-md); font-size: 13px;
+    color: var(--text-primary); background: var(--bg-page);
+    outline: none; cursor: pointer;
+}
+.privacy-select:focus { border-color: var(--accent); }
+
+/* ── Danger Zone ─────────────────────────────────────── */
+.danger-zone {
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+.danger-zone .settings-section-head { background: #fee2e2; border-bottom-color: #fecaca; }
+.danger-zone .settings-section-head i { color: #dc2626; }
+.danger-zone .settings-section-title { color: #991b1b; }
+
+.danger-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid #fecaca;
+}
+.danger-item:last-child { border-bottom: none; }
+.danger-item-info { display: flex; flex-direction: column; gap: 3px; }
+.danger-item-title { font-size: 14px; font-weight: 600; color: #991b1b; }
+.danger-item-desc  { font-size: 12px; color: #b91c1c; }
+
+@media (max-width: 768px) {
+    .settings-layout { grid-template-columns: 1fr; }
+    .settings-nav {
+        position: static;
+        display: flex; flex-wrap: wrap;
+    }
+    .settings-nav-item {
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        flex: 1; justify-content: center;
+        white-space: nowrap; font-size: 12px; padding: 10px 8px;
+    }
+    .settings-nav-item.active {
+        border-left-color: transparent;
+        border-bottom-color: var(--accent);
+    }
+    .settings-nav-divider { display: none; }
+    .form-row { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-layout">
+
+    <!-- ── Left Nav ─────────────────────────────────── -->
+    <nav class="settings-nav">
+        <div class="settings-nav-item active" data-tab="account">
+            <i class="fas fa-user"></i> Account
+        </div>
+        <div class="settings-nav-item" data-tab="security">
+            <i class="fas fa-lock"></i> Security
+        </div>
+        <hr class="settings-nav-divider">
+        <div class="settings-nav-item" data-tab="notifications">
+            <i class="fas fa-bell"></i> Notifications
+        </div>
+        <div class="settings-nav-item" data-tab="privacy">
+            <i class="fas fa-eye"></i> Privacy
+        </div>
+        <hr class="settings-nav-divider">
+        <div class="settings-nav-item" data-tab="danger" style="color:#dc2626;">
+            <i class="fas fa-trash-alt"></i> Danger Zone
+        </div>
+    </nav>
+
+    <!-- ── Right Panel ──────────────────────────────── -->
+    <div class="settings-panel">
+
+        <!-- ── TAB: Account ───────────────────────── -->
+        <div class="tab-pane active" id="tab-account">
+            <div class="settings-section">
+                <div class="settings-section-head">
+                    <i class="fas fa-user"></i>
+                    <span class="settings-section-title">Account Settings</span>
+                </div>
+                <div class="settings-body">
+                    <form method="POST" action="/settings/account">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <!-- name="Username" matches app.py: request.form.get('Username') -->
+                                <input type="text" name="Username" class="form-input"
+                                       value="{{ user.Username if user else '' }}"
+                                       placeholder="Username" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email Address</label>
+                                <!-- name="Email" matches app.py: request.form.get('Email') -->
+                                <input type="email" name="Email" class="form-input"
+                                       value="{{ user.Email if user else '' }}"
+                                       placeholder="your@email.com" required>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                            <button type="reset" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TAB: Security ──────────────────────── -->
+        <div class="tab-pane" id="tab-security">
+            <div class="settings-section">
+                <div class="settings-section-head">
+                    <i class="fas fa-lock"></i>
+                    <span class="settings-section-title">Change Password</span>
+                </div>
+                <div class="settings-body">
+                    <form method="POST" action="/settings/password">
+                        <div class="form-group">
+                            <label class="form-label">Current Password</label>
+                            <!-- name matches app.py: request.form.get('current_password') -->
+                            <input type="password" name="current_password" class="form-input"
+                                   placeholder="••••••••" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">New Password</label>
+                                <input type="password" name="new_password" class="form-input"
+                                       placeholder="••••••••" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Confirm New Password</label>
+                                <!-- name matches app.py: request.form.get('confirm_password') -->
+                                <input type="password" name="confirm_password" class="form-input"
+                                       placeholder="••••••••" required>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-key"></i> Update Password
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TAB: Notifications ─────────────────── -->
+        <div class="tab-pane" id="tab-notifications">
+            <div class="settings-section">
+                <div class="settings-section-head">
+                    <i class="fas fa-bell"></i>
+                    <span class="settings-section-title">Notification Preferences</span>
+                </div>
+                <div class="settings-body">
+                    <!-- These are UI-only toggles; wire to a /settings/notifications
+                         route + DB column when you're ready to persist them -->
+                    <div class="toggle-row">
+                        <div class="toggle-info">
+                            <span class="toggle-label">Email Notifications</span>
+                            <span class="toggle-desc">Get notified about new posts via email</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-info">
+                            <span class="toggle-label">Comment Replies</span>
+                            <span class="toggle-desc">Notify when someone replies to your comment</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-info">
+                            <span class="toggle-label">Weekly Digest</span>
+                            <span class="toggle-desc">Receive a weekly summary of top posts</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <span style="font-size:12px; color:var(--text-muted);">
+                            <i class="fas fa-info-circle"></i>
+                            Notification persistence coming soon.
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TAB: Privacy ───────────────────────── -->
+        <div class="tab-pane" id="tab-privacy">
+            <div class="settings-section">
+                <div class="settings-section-head">
+                    <i class="fas fa-eye"></i>
+                    <span class="settings-section-title">Privacy Settings</span>
+                </div>
+                <div class="settings-body">
+                    <div class="privacy-row">
+                        <div class="toggle-info">
+                            <span class="toggle-label">Profile Visibility</span>
+                            <span class="toggle-desc">Who can see your profile</span>
+                        </div>
+                        <select class="privacy-select">
+                            <option>Everyone</option>
+                            <option>Members only</option>
+                            <option>Only me</option>
+                        </select>
+                    </div>
+                    <div class="privacy-row">
+                        <div class="toggle-info">
+                            <span class="toggle-label">Show Activity</span>
+                            <span class="toggle-desc">Display your likes and comments publicly</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="privacy-row">
+                        <div class="toggle-info">
+                            <span class="toggle-label">Searchable Profile</span>
+                            <span class="toggle-desc">Allow others to find you by username</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <span style="font-size:12px; color:var(--text-muted);">
+                            <i class="fas fa-info-circle"></i>
+                            Privacy persistence coming soon.
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── TAB: Danger Zone ───────────────────── -->
+        <div class="tab-pane" id="tab-danger">
+            <div class="settings-section danger-zone">
+                <div class="settings-section-head">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span class="settings-section-title">Danger Zone</span>
+                </div>
+                <div class="danger-item">
+                    <div class="danger-item-info">
+                        <span class="danger-item-title">Delete Account</span>
+                        <span class="danger-item-desc">
+                            Permanently delete your account and all data. This cannot be undone.
+                        </span>
+                    </div>
+                    <form method="POST" action="/settings/delete_account"
+                          onsubmit="return confirm('Are you absolutely sure? All your data will be deleted permanently.')">
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash-alt"></i> Delete My Account
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /.settings-panel -->
+</div><!-- /.settings-layout -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Tab switching logic ────────────────────────────────────
+const navItems = document.querySelectorAll('.settings-nav-item[data-tab]');
+const tabPanes = document.querySelectorAll('.tab-pane');
+
+navItems.forEach(item => {
+    item.addEventListener('click', () => {
+        const target = item.dataset.tab;
+
+        // Update nav active state
+        navItems.forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+
+        // Show correct pane
+        tabPanes.forEach(pane => {
+            pane.classList.toggle('active', pane.id === `tab-${target}`);
+        });
+    });
+});
+
+// ── Auto-open tab from URL hash (e.g. /settings#security) ──
+const hash = window.location.hash.replace('#', '');
+if (hash) {
+    const matchingNav = document.querySelector(`.settings-nav-item[data-tab="${hash}"]`);
+    if (matchingNav) matchingNav.click();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlogNest</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:'Segoe UI',sans-serif;
+        }
+
+        nav{
+            width:100%;
+            background:#fff;
+            padding:18px 8%;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            box-shadow:0 2px 15px rgba(0,0,0,.08);
+        }
+
+        .logo{
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+
+        .logo i{
+            color:#2563eb;
+            font-size:32px;
+        }
+
+        .logo h2{
+            color:#1e293b;
+        }
+
+        .nav-links{
+            display:flex;
+            list-style:none;
+            gap:35px;
+        }
+
+        .nav-links a{
+            text-decoration:none;
+            color:#334155;
+            font-weight:500;
+            transition:.3s;
+        }
+
+        .nav-links a:hover{
+            color:#2563eb;
+        }
+
+        .right-nav{
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+
+        .search-box{
+            position:relative;
+        }
+
+        .search-box input{
+            width:260px;
+            padding:10px 40px 10px 15px;
+            border:1px solid #dbe2ea;
+            border-radius:8px;
+            outline:none;
+        }
+
+        .search-box i{
+            position:absolute;
+            right:15px;
+            top:50%;
+            transform:translateY(-50%);
+            color:#64748b;
+        }
+
+        .btn{
+            padding:10px 15px;
+            border-radius:8px;
+            text-decoration:none;
+            font-weight:600;
+            transition:.3s;
+        }
+
+        .login{
+            border:1px solid #2563eb;
+            color:#2563eb;
+        }
+
+        .register{
+            background:#2563eb;
+            color:white;
+        }
+
+        .login:hover,
+        .register:hover{
+            transform:translateY(-2px);
+        }
+
+        @media(max-width:900px){
+            .nav-links{
+                display:none;
+            }
+
+            .search-box input{
+                width:180px;
+            }
+            .post-image {
+                width: 100%;
+                max-width: 600px;
+                height: 200px;
+                object-fit: cover;    /* crops to fill without stretching */
+                border-radius: 8px;
+            }
+            .hero {
+                position: relative;
+                width: 100%;
+                height: 400px;
+                overflow: hidden;
+            }
+
+            .hero img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;        /* fills the box, crops neatly */
+            }
+
+            .hero-text {
+                position: absolute;
+                bottom: 40px;
+                left: 40px;
+                color: white;
+                text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            }
+
+            .hero-text h1 { font-size: 2rem; margin-bottom: 8px; }
+            .hero-text p  { font-size: 1.1rem; opacity: 0.9; }
+        }
+        /* Hero */
+        .hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f0f4ff;
+            padding: 60px 80px;
+            gap: 40px;
+            overflow: hidden;
+        }
+
+        .hero-left {
+            flex: 1;
+            max-width: 480px;
+        }
+
+        .hero-sub {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .hero-sub .brand {
+             color: #2563eb;       /* blue — match your navbar color */
+            font-weight: 600;
+        }
+
+        .hero-left h1 {
+            font-size: 2.4rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #111;
+            margin-bottom: 16px;
+        }
+
+        .hero-desc {
+            font-size: 0.95rem;
+            color: #555;
+            margin-bottom: 28px;
+            line-height: 1.6;
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary:hover { background: #1d4ed8; }
+
+        .btn-outline {
+           background: transparent;
+           color: #111;
+           padding: 12px 24px;
+           border-radius: 6px;
+           border: 1.5px solid #ccc;
+           text-decoration: none;
+           font-weight: 500;
+           font-size: 0.95rem;
+        }
+
+        .btn-outline:hover { border-color: #2563eb; color: #2563eb; }
+
+         /* Hero image */
+        .hero-right {
+            flex: 1;
+            max-width: 520px;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .hero-right img {
+            width: 100%;
+            height: 320px;
+            object-fit: cover;
+            border-radius: 16px;
+            display: block;
+        }
+
+         /* Responsive */
+        @media (max-width: 768px) {
+        .hero {
+            flex-direction: column;
+            padding: 40px 24px;
+            text-align: center;
+        }
+        .hero-btns { justify-content: center; }
+        .hero-right { max-width: 100%;
+        }
+        }
+        .featured-posts{
+                padding:70px 8%;
+                background:#f8fafc;
+        }
+
+        .featured-posts h2{
+               text-align:center;
+               margin-bottom:40px;
+               font-size:2rem;
+               color:#1e293b;
+        }
+
+        .card-container{
+               display:grid;
+               grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+               gap:30px;
+        }
+
+        .card{
+            background:#fff;
+            border-radius:18px;
+            overflow:hidden;
+            box-shadow:0 5px 20px rgba(0,0,0,.08);
+            transition:0.3s ease;
+            position:relative;
+        }
+
+        .card:hover{
+            transform:translateY(-8px);
+            box-shadow:0 10px 30px rgba(0,0,0,.15);
+        }
+
+        .card img{
+            width:100%;
+            height:220px;
+            object-fit:cover;
+        }
+
+        .tag{
+            position:absolute;
+            top:15px;
+            left:15px;
+            background:#2563eb;
+            color:#fff;
+            padding:6px 12px;
+            border-radius:20px;
+            font-size:13px;
+            font-weight:600;
+        }
+
+        .card-content{
+            padding:20px;
+        }
+
+        .card-content h3{
+            color:#1e293b;
+            margin-bottom:15px;
+            line-height:1.4;
+        }
+
+        .meta{
+            display:flex;
+            justify-content:space-between;
+            color:#64748b;
+            font-size:14px;
+        }
+
+        .meta i{
+            margin-right:5px;
+        }
+        
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">
+        <i class="fas fa-feather-alt"></i>
+        <h2>BlogNest</h2>
+    </div> <br></br>
+
+    <ul class="nav-links">
+        <li><a href="/"><i class="fas fa-house"></i> Home</a></li>
+        <li><a href="/categories"><i class="fas fa-layer-group"></i> Categories</a></li>
+       <li><a href="/about"><i class="fas fa-circle-info"></i> About</a></li>
+       <li><a href="/contact"><i class="fas fa-envelope"></i> Contact</a></li>
+    </ul>
+
+    <div class="right-nav">
+        <form action="/search" method="GET" style="display:flex; align-items:center;">
+            <div class="search-box">
+                  <input type="text" name="q" placeholder="Search blogs...">
+                     <button type="submit" style="background:none;border:none;cursor:pointer;position:absolute;right:10px;top:50%;transform:translateY(-50%);">
+                       <i class="fas fa-search"></i>
+                     </button>
+            </div>
+        </form>
+
+        <a href="/login" class="btn login">
+               <i class="fas fa-sign-in-alt"></i> Login
+        </a>
+        <a href="/register" class="btn register">
+               <i class="fas fa-user-plus"></i> Register
+        </a>
+    </div>
+</nav>
+<!-- HERO SECTION -->
+<section class="hero">
+    <div class="hero-left">
+        <p class="hero-sub">Welcome to <span class="brand">BlogNest</span></p>
+        <h1>Where Stories Inspire<br>and Ideas Grow</h1>
+        <p class="hero-desc">Explore thoughts, guides, and stories on technology,
+        lifestyle, travel, personal growth and more.</p>
+        <div class="hero-btns">
+            <a href="/feed" class="btn-primary">Explore Blogs</a>
+            <a href="/register" class="btn-outline">Join Our Community</a>>
+        </div>
+    </div>
+    <div class="hero-right">
+        <img src="{{ url_for('static', filename='images/bun.jpg') }}" alt="hero">
+    </div>
+  </div>
+
+</section>
+
+<section class="featured-posts">
+    <h2>Discover Our Latest Stories</h2>
+
+   <div class="card-container">
+    {% for post in featured_posts %}
+    <div class="card">
+        {% if post.thumbnail %}
+        <img src="{{ post.thumbnail }}" alt="{{ post.title }}">
+        {% else %}
+        <img src="{{ url_for('static', filename='images/technology.jpg') }}" alt="{{ post.title }}">
+        {% endif %}
+
+        <span class="tag">
+            {{ post.category.name if post.category else 'General' }}
+        </span>
+
+        <div class="card-content">
+            <h3>{{ post.title }}</h3>
+            <div class="meta">
+                <span><i class="fas fa-calendar"></i>
+                    {{ post.created_at.strftime('%b %d, %Y') if post.created_at else '' }}
+                </span>
+                <span><i class="fas fa-clock"></i>
+                    {{ [1, (post.content.split()|length // 200)]|max }} min read
+                </span>
+            </div>
+        </div>
+
+        <a href="/post/{{ post.Id }}" class="stretched-link" style="position:absolute;inset:0;"></a>
+    </div>
+    {% else %}
+    <p style="color:#64748b; text-align:center; grid-column:1/-1;">No posts yet.</p>
+    {% endfor %}
+</div>
+</section>
+</div>
+
+</body>
+</html>

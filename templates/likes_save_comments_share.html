@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% block title %}Manage Users – Admin{% endblock %}
+{% block page_title %}Manage Users{% endblock %}
+
+{% block extra_css %}
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fff; color: #1a1a1a; }
+
+  .panel { max-width: 860px; margin: 0 auto; padding: 24px 16px; }
+
+  /* ── Action bar ── */
+  .action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 28px;
+  }
+  .action-left { display: flex; gap: 10px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500;
+    cursor: pointer; border: 1px solid #d1d5db; background: #fff;
+    color: #374151; transition: background 0.15s, color 0.15s, border-color 0.15s;
+    user-select: none;
+  }
+  .btn:hover { background: #f3f4f6; }
+  .btn.active { background: #eef2ff; border-color: #6366f1; color: #4f46e5; }
+  .btn.liked { background: #fdf2f8; border-color: #ec4899; color: #db2777; }
+  .btn.saved { background: #f0fdf4; border-color: #22c55e; color: #16a34a; }
+
+  .icon-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid #d1d5db; background: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #6b7280; transition: background 0.15s, color 0.15s;
+  }
+  .icon-btn:hover { background: #f3f4f6; color: #374151; }
+  .action-right { display: flex; gap: 8px; position: relative; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px);
+    background: #1a1a1a; color: #fff; padding: 10px 20px; border-radius: 8px;
+    font-size: 13px; font-weight: 500; opacity: 0;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    pointer-events: none; z-index: 999; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* ── Share dropdown ── */
+  .share-menu {
+    position: absolute; right: 0; top: 46px;
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12); min-width: 180px;
+    overflow: hidden; z-index: 100;
+    display: none;
+  }
+  .share-menu.open { display: block; }
+  .share-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 16px; font-size: 14px; color: #374151;
+    cursor: pointer; transition: background 0.12s;
+  }
+  .share-item:hover { background: #f9fafb; }
+
+  /* ── Comments ── */
+  .comments-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .comments-header h2 { font-size: 17px; font-weight: 700; }
+  .count-badge {
+    background: #f3f4f6; color: #6b7280;
+    font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 12px;
+  }
+
+  .comment-form { display: flex; gap: 12px; margin-bottom: 28px; }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: #6366f1; color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .textarea-wrap { flex: 1; }
+  textarea {
+    width: 100%; padding: 10px 14px; border-radius: 8px;
+    border: 1px solid #d1d5db; resize: vertical; min-height: 80px;
+    font-size: 14px; font-family: inherit; color: #1a1a1a;
+    outline: none; transition: border-color 0.15s;
+    background: #f9fafb;
+  }
+  textarea:focus { border-color: #6366f1; background: #fff; }
+  .post-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    margin-top: 10px; padding: 9px 20px; border-radius: 8px;
+    background: #6366f1; color: #fff; font-size: 14px; font-weight: 600;
+    border: none; cursor: pointer; transition: background 0.15s;
+  }
+  .post-btn:hover { background: #4f46e5; }
+  .post-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Posted comments ── */
+  .comment-list { display: flex; flex-direction: column; gap: 18px; }
+  .comment-item { display: flex; gap: 12px; }
+  .comment-body { flex: 1; }
+  .comment-meta { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+  .comment-meta span { font-weight: 400; color: #9ca3af; margin-left: 8px; font-size: 12px; }
+  .comment-text { font-size: 14px; color: #4b5563; line-height: 1.55; }
+  .empty-state { font-size: 14px; color: #9ca3af; padding: 8px 0; }
+</style>
+</head>
+<body>
+<div class="panel">
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <div class="action-left">
+      <button class="btn" id="likeBtn" onclick="toggleLike()">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        <span id="likeLabel">0 Likes</span>
+      </button>
+      <button class="btn" id="saveBtn" onclick="toggleSave()">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M17 3H7a2 2 0 00-2 2v16l7-3 7 3V5a2 2 0 00-2-2z"/></svg>
+        <span id="saveLabel">Save</span>
+      </button>
+    </div>
+    <div class="action-right">
+      <button class="icon-btn" title="Copy link" onclick="copyLink()">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+      </button>
+      <button class="icon-btn" title="Share" onclick="toggleShareMenu()" id="shareBtn">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      </button>
+      <div class="share-menu" id="shareMenu">
+        <div class="share-item" onclick="shareVia('twitter')">
+          <svg width="16" height="16" fill="#1da1f2" viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 01-3.14 1.53A4.48 4.48 0 0022.43.36a9 9 0 01-2.88 1.1A4.52 4.52 0 0016 0c-2.5 0-4.5 2-4.5 4.5 0 .35.04.7.11 1.02C7.69 5.34 4.07 3.58 1.64.9a4.5 4.5 0 00-.61 2.27c0 1.56.8 2.94 2 3.74A4.49 4.49 0 011 6.13v.06c0 2.18 1.55 4 3.6 4.41a4.6 4.6 0 01-2.03.08 4.52 4.52 0 004.22 3.13A9.06 9.06 0 010 19.54 12.8 12.8 0 006.92 21c8.3 0 12.84-6.88 12.84-12.85 0-.2 0-.39-.01-.58A9.17 9.17 0 0023 3z"/></svg>
+          Share on X (Twitter)
+        </div>
+        <div class="share-item" onclick="shareVia('facebook')">
+          <svg width="16" height="16" fill="#1877f2" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+          Share on Facebook
+        </div>
+        <div class="share-item" onclick="shareVia('whatsapp')">
+          <svg width="16" height="16" fill="#25d366" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Share on WhatsApp
+        </div>
+        <div class="share-item" onclick="copyLink()">
+          <svg width="16" height="16" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          Copy link
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comments -->
+  <div class="comments-header">
+    <h2>Comments</h2>
+    <span class="count-badge" id="countBadge">0</span>
+  </div>
+
+  <div class="comment-form">
+    <div class="avatar">P</div>
+    <div class="textarea-wrap">
+      <textarea id="commentInput" placeholder="Write a comment…"></textarea>
+      <button class="post-btn" id="postBtn" onclick="postComment()">
+        <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        Post Comment
+      </button>
+    </div>
+  </div>
+
+  <div class="comment-list" id="commentList">
+    <p class="empty-state">No comments yet. Be the first!</p>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  let liked = false, likeCount = 0;
+  let saved = false;
+  let comments = [];
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function toggleLike() {
+    liked = !liked;
+    likeCount += liked ? 1 : -1;
+    const btn = document.getElementById('likeBtn');
+    btn.className = 'btn' + (liked ? ' liked' : '');
+    document.getElementById('likeLabel').textContent = likeCount + (likeCount === 1 ? ' Like' : ' Likes');
+    showToast(liked ? '❤️ You liked this post' : 'Like removed');
+  }
+
+  function toggleSave() {
+    saved = !saved;
+    const btn = document.getElementById('saveBtn');
+    btn.className = 'btn' + (saved ? ' saved' : '');
+    document.getElementById('saveLabel').textContent = saved ? 'Saved' : 'Save';
+    showToast(saved ? '🔖 Post saved' : 'Removed from saved');
+  }
+
+  function copyLink() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+      showToast('🔗 Link copied to clipboard');
+    }).catch(() => {
+      showToast('🔗 Link: ' + url);
+    });
+    closeShareMenu();
+  }
+
+  function toggleShareMenu() {
+    const menu = document.getElementById('shareMenu');
+    menu.classList.toggle('open');
+  }
+
+  function closeShareMenu() {
+    document.getElementById('shareMenu').classList.remove('open');
+  }
+
+  function shareVia(platform) {
+    const url = encodeURIComponent(window.location.href);
+    const title = encodeURIComponent(document.title || 'Check this out');
+    const urls = {
+      twitter: `https://twitter.com/intent/tweet?url=${url}&text=${title}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+      whatsapp: `https://wa.me/?text=${title}%20${url}`
+    };
+    if (urls[platform]) window.open(urls[platform], '_blank', 'width=600,height=400');
+    closeShareMenu();
+    showToast('Opening share dialog…');
+  }
+
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('shareMenu');
+    const shareBtn = document.getElementById('shareBtn');
+    if (!shareBtn.contains(e.target) && !menu.contains(e.target)) {
+      closeShareMenu();
+    }
+  });
+
+  function postComment() {
+    const input = document.getElementById('commentInput');
+    const text = input.value.trim();
+    if (!text) { showToast('Please write something first'); return; }
+
+    comments.push({ text, time: new Date() });
+    input.value = '';
+    renderComments();
+    showToast('💬 Comment posted');
+  }
+
+  // Allow Ctrl+Enter to submit
+  document.getElementById('commentInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) postComment();
+  });
+
+  function timeAgo(date) {
+    const s = Math.floor((Date.now() - date) / 1000);
+    if (s < 10) return 'just now';
+    if (s < 60) return s + 's ago';
+    if (s < 3600) return Math.floor(s/60) + 'm ago';
+    return Math.floor(s/3600) + 'h ago';
+  }
+
+  function renderComments() {
+    const list = document.getElementById('commentList');
+    document.getElementById('countBadge').textContent = comments.length;
+    if (!comments.length) {
+      list.innerHTML = '<p class="empty-state">No comments yet. Be the first!</p>';
+      return;
+    }
+    list.innerHTML = comments.slice().reverse().map((c, i) => `
+      <div class="comment-item">
+        <div class="avatar">P</div>
+        <div class="comment-body">
+          <div class="comment-meta">You <span>${timeAgo(c.time)}</span></div>
+          <div class="comment-text">${escapeHtml(c.text)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+
+{% block title %}Profile – BlogNest{% endblock %}
+{% block page_title %}Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Profile Layout ───────────────────────────────────── */
+.profile-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+/* ── Profile Card ─────────────────────────────────────── */
+.profile-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 20px;
+    text-align: center;
+    position: sticky;
+    top: calc(var(--topbar-height) + 24px);
+}
+
+.profile-avatar-wrap {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 16px;
+}
+
+.profile-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 36px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    border: 4px solid var(--accent-light);
+}
+
+.avatar-edit-btn {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    border: 2px solid #fff;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.profile-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.profile-role {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+}
+
+.profile-email {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    word-break: break-all;
+}
+
+.profile-email i { margin-right: 6px; color: var(--text-muted); }
+
+.profile-divider {
+    border: none;
+    border-top: 1px solid var(--border-light);
+    margin: 16px 0;
+}
+
+/* ── Mini Stats ───────────────────────────────────────── */
+.mini-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.mini-stat {
+    background: var(--bg-page);
+    border-radius: var(--radius-md);
+    padding: 10px;
+    text-align: center;
+}
+
+.mini-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.mini-stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.verified-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #059669;
+    background: #d1fae5;
+    border-radius: var(--radius-md);
+    padding: 6px 12px;
+}
+
+/* ── Right Column ─────────────────────────────────────── */
+.profile-right { display: flex; flex-direction: column; gap: 20px; }
+
+/* ── Info Card ────────────────────────────────────────── */
+.info-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.info-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.info-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-card-title i { color: var(--accent); }
+
+.info-card-body { padding: 20px; }
+
+/* ── Info Row ─────────────────────────────────────────── */
+.info-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.info-row:last-child { margin-bottom: 0; }
+
+.info-field { display: flex; flex-direction: column; gap: 4px; }
+
+.info-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-muted);
+}
+
+.info-value {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* ── Edit Form ────────────────────────────────────────── */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.form-group:last-child { margin-bottom: 0; }
+
+.form-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.form-input {
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    color: var(--text-primary);
+    background: var(--bg-page);
+    outline: none;
+    transition: border-color var(--transition);
+    font-family: inherit;
+    width: 100%;
+}
+
+.form-input:focus { border-color: var(--accent); background: #fff; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    padding-top: 4px;
+}
+
+/* ── Activity List ────────────────────────────────────── */
+.activity-list { padding: 8px 0; }
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    transition: background var(--transition);
+}
+
+.activity-item:hover { background: var(--bg-page); }
+
+.activity-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.activity-info { flex: 1; min-width: 0; }
+
+.activity-text {
+    font-size: 13px;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.activity-text strong { font-weight: 600; }
+
+.activity-time {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.empty-activity {
+    padding: 32px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+@media (max-width: 900px) {
+    .profile-grid { grid-template-columns: 1fr; }
+    .profile-card { position: static; }
+}
+
+@media (max-width: 560px) {
+    .info-row  { grid-template-columns: 1fr; }
+    .form-row  { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-grid">
+
+    <!-- ── Left: Profile Card ──────────────────── -->
+    <div class="profile-card">
+        <div class="profile-avatar-wrap">
+            <div class="profile-avatar">
+                {{ user.Username[0].upper() if user else 'U' }}
+            </div>
+            <button class="avatar-edit-btn" title="Change avatar">
+                <i class="fas fa-camera"></i>
+            </button>
+        </div>
+
+        <div class="profile-name">{{ user.Username if user else 'User' }}</div>
+        <div class="profile-role">{{ user.role if user else 'Member' }}</div>
+        <div class="profile-email">
+            <i class="fas fa-envelope"></i>{{ user.Email if user else '—' }}
+        </div>
+
+        <div class="mini-stats">
+            <div class="mini-stat">
+                <div class="mini-stat-value">{{ comments_count or 0 }}</div>
+                <div class="mini-stat-label">Comments</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-stat-value">{{ liked_count or 0 }}</div>
+                <div class="mini-stat-label">Liked</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-stat-value">{{ bookmarks_count or 0 }}</div>
+                <div class="mini-stat-label">Saved</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-stat-value">{{ posts_read or 0 }}</div>
+                <div class="mini-stat-label">Read</div>
+            </div>
+        </div>
+
+        {% if user and user.is_verified %}
+        <div class="verified-badge">
+            <i class="fas fa-check-circle"></i> Verified Account
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ── Right: Details + Edit ──────────────── -->
+    <div class="profile-right">
+
+        <!-- Account Info -->
+        <div class="info-card">
+            <div class="info-card-head">
+                <span class="info-card-title">
+                    <i class="fas fa-id-card"></i> Account Info
+                </span>
+            </div>
+            <div class="info-card-body">
+                <div class="info-row">
+                    <div class="info-field">
+                        <span class="info-label">Username</span>
+                        <span class="info-value">{{ user.Username if user else '—' }}</span>
+                    </div>
+                    <div class="info-field">
+                        <span class="info-label">Email</span>
+                        <span class="info-value">{{ user.Email if user else '—' }}</span>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-field">
+                        <span class="info-label">Role</span>
+                        <span class="info-value">{{ user.role if user else '—' }}</span>
+                    </div>
+                    <div class="info-field">
+                        <span class="info-label">Status</span>
+                        <span class="info-value">
+                            {% if user and user.is_verified %}
+                                ✅ Verified
+                            {% else %}
+                                ⚠️ Unverified
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Profile -->
+        <div class="info-card">
+            <div class="info-card-head">
+                <span class="info-card-title">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </span>
+            </div>
+            <div class="info-card-body">
+                <form method="POST" action="/profile">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Username</label>
+                            <input type="text" name="username" class="form-input"
+                                   value="{{ user.Username if user else '' }}" placeholder="Your username">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-input"
+                                   value="{{ user.Email if user else '' }}" placeholder="your@email.com">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">New Password <span style="color:var(--text-muted);font-weight:400;">(leave blank to keep current)</span></label>
+                        <input type="password" name="password" class="form-input" placeholder="••••••••">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                        <button type="reset" class="btn btn-secondary">Reset</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="info-card">
+            <div class="info-card-head">
+                <span class="info-card-title">
+                    <i class="fas fa-history"></i> Recent Activity
+                </span>
+            </div>
+            <div class="activity-list">
+                {% if recent_activity %}
+                    {% set act_colors = [
+                        ('icon-blue','fas fa-heart'),
+                        ('icon-purple','fas fa-comment-alt'),
+                        ('icon-amber','fas fa-bookmark')
+                    ] %}
+                    {% for item in recent_activity %}
+                    <div class="activity-item">
+                        <div class="activity-dot {{ act_colors[loop.index0 % 3][0] }}">
+                            <i class="{{ act_colors[loop.index0 % 3][1] }}"></i>
+                        </div>
+                        <div class="activity-info">
+                            <div class="activity-text">{{ item.description }}</div>
+                            <div class="activity-time">{{ item.time }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-activity">No recent activity yet.</div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

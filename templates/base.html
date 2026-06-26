@@ -1,0 +1,242 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BlogNest{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────────────── -->
+<aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-header">
+        <div class="sidebar-logo">
+            <i class="fas fa-feather-alt"></i>
+            <span class="logo-text">BlogNest</span>
+        </div>
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <span class="nav-section-label">Main</span>
+        <ul>
+            <li>
+                <!-- Dashboard — goes to correct dashboard based on role -->
+                <a href="{{ '/admin/dashboard' if session.get('role') == 'admin' else '/user_dashboard' }}" 
+                   class="nav-link {% if request.endpoint in ['admin_dashboard', 'user_dashboard'] %}active{% endif %}">
+                    <i class="fas fa-home nav-icon"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+            </li>
+
+            {% if session.get('role') == 'admin' %}
+            <!-- ADMIN LINKS -->
+            <li>
+               <li>
+                   <a href="/admin/users" class="nav-link {% if request.endpoint == 'admin_users' %}active{% endif %}">
+                     <i class="fas fa-users nav-icon"></i>
+                     <span class="nav-text">Users</span>
+                   </a>
+                </li>
+                <li>
+                   <a href="/admin/posts" class="nav-link {% if request.endpoint == 'admin_posts' %}active{% endif %}">
+                      <i class="fas fa-file-alt nav-icon"></i>
+                      <span class="nav-text">Posts</span>
+                   </a>
+                </li>
+            </li>
+            <li>
+                <a href="/admin/comments" class="nav-link {% if request.endpoint == 'admin_comments' %}active{% endif %}">
+                    <i class="fas fa-comments nav-icon"></i>
+                    <span class="nav-text">Comments</span>
+                </a>
+            </li>
+            <li>
+                <a href="/admin/categories" class="nav-link {% if request.endpoint == 'admin_categories' %}active{% endif %}">
+                    <i class="fas fa-tags nav-icon"></i>
+                    <span class="nav-text">Categories</span>
+                </a>
+                
+            </li>
+             
+            {% else %}
+            <!-- USER LINKS -->
+            <li>
+                <a href="/saved" class="nav-link {% if request.endpoint == 'saved' %}active{% endif %}">
+                    <i class="fas fa-book nav-icon"></i>
+                    <span class="nav-text">Saved</span>
+                </a>
+            </li>
+            <li>
+                <a href="/profile" class="nav-link {% if request.endpoint == 'profile' %}active{% endif %}">
+                    <i class="fas fa-user nav-icon"></i>
+                    <span class="nav-text">Profile</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+      </div>
+
+        <div class="nav-section">
+            <span class="nav-section-label">Account</span>
+            <ul>
+                <li>
+                    <a href="/settings" class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}">
+                        <i class="fas fa-cog nav-icon"></i>
+                        <span class="nav-text">Settings</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/logout" class="nav-link logout-link">
+                        <i class="fas fa-sign-out-alt nav-icon"></i>
+                        <span class="nav-text">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-card">
+            <div class="user-avatar">
+                {{ session.get('username', 'U')[0].upper() }}
+            </div>
+            <div class="user-info">
+                <div class="user-name">{{ session.get('username', 'User') }}</div>
+                <div class="user-role">{{ session.get('role', 'Member') }}</div>
+            </div>
+        </div>
+    </div>
+
+</aside>
+<!-- ── End Sidebar ─────────────────────────────────────────── -->
+
+
+<!-- ── Main Wrapper ────────────────────────────────────────── -->
+<div class="main-wrapper" id="mainWrapper">
+
+    <!-- Topbar -->
+    <header class="topbar">
+
+        <div class="topbar-left">
+            <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+        </div>
+
+        <div class="topbar-right">
+
+            <!-- Search -->
+            <div class="search-box">
+                <form action="/search" method="GET" style="display:inline;">
+                    <input type="text" name="q" placeholder="Search..." value="{{ request.args.get('q', '') }}">
+                    <button type="submit">🔍</button>
+                </form>
+            </div>
+
+            <!-- Notifications -->
+            <button class="icon-btn" aria-label="Notifications">
+                <i class="fas fa-bell"></i>
+                {% if notification_count | default(0) > 0 %}
+                   <span class="badge">{{ notification_count }}</span>
+                {% endif %}
+            </button>
+
+            <!-- Profile dropdown -->
+            <div class="profile-dropdown">
+                <button class="profile-trigger" id="profileTrigger">
+                    <div class="avatar-sm">
+                        {{ session.get('username', 'U')[0].upper() }}
+                    </div>
+                    <i class="fas fa-chevron-down chevron"></i>
+                </button>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="/profile" class="dropdown-item">
+                        <i class="fas fa-user"></i> Profile
+                    </a>
+                    <a href="/settings" class="dropdown-item">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                    <hr class="dropdown-divider">
+                    <a href="/logout" class="dropdown-item danger">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </header>
+    <!-- End Topbar -->
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">
+                        <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'danger' %}fa-times-circle{% else %}fa-info-circle{% endif %}"></i>
+                        {{ message }}
+                        <button class="flash-close" onclick="this.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    <!-- End Flash Messages -->
+
+    <!-- Page Content -->
+    <main class="content">
+        {% block content %}
+        {% endblock %}
+    </main>
+    <!-- End Page Content -->
+
+</div>
+<!-- ── End Main Wrapper ────────────────────────────────────── -->
+
+<!-- Sidebar overlay for mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+const sidebar     = document.getElementById('sidebar');
+const mainWrapper = document.getElementById('mainWrapper');
+const toggle      = document.getElementById('sidebarToggle');
+const overlay     = document.getElementById('sidebarOverlay');
+
+toggle.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+    mainWrapper.classList.toggle('expanded');
+    overlay.classList.toggle('active');
+});
+
+overlay.addEventListener('click', () => {
+    sidebar.classList.remove('collapsed');
+    mainWrapper.classList.remove('expanded');
+    overlay.classList.remove('active');
+});
+
+const profileTrigger = document.getElementById('profileTrigger');
+const dropdownMenu   = document.getElementById('dropdownMenu');
+
+profileTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdownMenu.classList.toggle('open');
+});
+
+document.addEventListener('click', () => {
+    dropdownMenu.classList.remove('open');
+});
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Saved – BlogNest{% endblock %}
+{% block page_title %}Saved{% endblock %}
+
+{% block extra_css %}
+<style>
+.saved-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+}
+.saved-title { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+.saved-count  { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+.saved-count span { font-weight: 600; color: var(--text-primary); }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* ── Filter Tabs ─────────────────────────────────────────── */
+.filter-tabs {
+    display: flex; gap: 5px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-xl); padding: 4px;
+    width: fit-content; margin-bottom: 20px;
+}
+.filter-tab {
+    padding: 6px 16px; border-radius: 20px; font-size: 13px;
+    font-weight: 500; color: var(--text-secondary);
+    border: none; background: none; cursor: pointer;
+    transition: background var(--transition), color var(--transition);
+}
+.filter-tab.active { background: var(--accent); color: #fff; }
+.filter-tab:hover:not(.active) { background: var(--bg-page); color: var(--text-primary); }
+
+/* ── Section title ───────────────────────────────────────── */
+.section-title {
+    font-size: 13px; font-weight: 600; color: var(--text-primary);
+    margin-bottom: 12px; display: flex; align-items: center; gap: 10px;
+}
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
+
+/* ── Grid ────────────────────────────────────────────────── */
+.saved-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 18px;
+}
+
+/* ── Post Card ───────────────────────────────────────────── */
+.post-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: box-shadow var(--transition), transform var(--transition);
+}
+.post-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
+
+.post-card-thumb {
+    width: 100%; height: 150px; background: var(--bg-page);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px; flex-shrink: 0;
+    position: relative; overflow: hidden;
+}
+.post-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.badge-cat {
+    position: absolute; top: 10px; left: 10px;
+    background: var(--accent); color: #fff;
+    font-size: 10px; font-weight: 700; letter-spacing: .05em;
+    padding: 3px 9px; border-radius: 20px; text-transform: uppercase;
+}
+
+.post-card-body {
+    padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 6px;
+}
+.post-card-title {
+    font-size: 14px; font-weight: 700; color: var(--text-primary);
+    line-height: 1.4; text-decoration: none;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+}
+.post-card-title:hover { color: var(--accent); }
+
+.post-card-excerpt {
+    font-size: 12px; color: var(--text-secondary); line-height: 1.5; flex: 1;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+}
+.post-card-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.meta-chip {
+    font-size: 11px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 4px;
+}
+
+.post-card-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-top: 1px solid var(--border-light);
+}
+.post-card-actions { display: flex; gap: 5px; }
+.action-btn {
+    width: 30px; height: 30px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: none;
+    color: var(--text-secondary); font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background var(--transition), color var(--transition);
+    text-decoration: none;
+}
+.action-btn:hover        { background: var(--bg-page); color: var(--text-primary); }
+.action-btn.danger:hover { background: #FCEBEB; color: #E24B4A; border-color: #F7C1C1; }
+
+/* ── Empty state ─────────────────────────────────────────── */
+.empty-full {
+    grid-column: 1 / -1; text-align: center;
+    padding: 60px 20px; color: var(--text-muted);
+}
+.empty-full i  { font-size: 48px; margin-bottom: 16px; display: block; opacity: .3; }
+.empty-full h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+.empty-full p  { font-size: 13px; margin-bottom: 16px; }
+
+@media (max-width: 640px) {
+    .saved-grid { grid-template-columns: 1fr; }
+    .header-actions { width: 100%; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="saved-header">
+    <div>
+        <h1 class="saved-title">Saved Posts</h1>
+        <p class="saved-count">
+            <span>{{ bookmarks | length }}</span>
+            saved post{{ 's' if bookmarks | length != 1 else '' }}
+        </p>
+    </div>
+    <div class="header-actions">
+        <!-- "Explore posts" redirects to /feed which shows admin's published posts -->
+        <a href="{{ url_for('feed') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-compass"></i> Explore posts
+        </a>
+    </div>
+</div>
+
+<div class="section-title">Your bookmarks</div>
+
+<!-- Filter tabs (client-side sort) -->
+<div class="filter-tabs">
+    <button class="filter-tab active" onclick="sortCards('all', this)">All</button>
+    <button class="filter-tab"        onclick="sortCards('recent', this)">Recent</button>
+    <button class="filter-tab"        onclick="sortCards('oldest', this)">Oldest</button>
+</div>
+
+<div class="saved-grid" id="savedGrid">
+
+    {% if bookmarks %}
+        {% for bookmark in bookmarks %}
+        {% set post = bookmark.post %}
+        {% if post %}
+        <div class="post-card"
+             data-date="{{ bookmark.Id }}">
+
+            <!-- Thumbnail -->
+            <div class="post-card-thumb">
+                {% if post.thumbnail %}
+                    <img src="{{ post.thumbnail }}" alt="{{ post.title }}">
+                {% else %}
+                    <i class="fas fa-file-alt" style="font-size:40px; color:var(--text-muted); opacity:.3;"></i>
+                {% endif %}
+                {% if post.category %}
+                    <span class="badge-cat">{{ post.category.name }}</span>
+                {% endif %}
+            </div>
+
+            <!-- Body -->
+            <div class="post-card-body">
+                <!-- Use post.Id (capital I) to match your model -->
+                <a href="/post/{{ post.Id }}" class="post-card-title">{{ post.title }}</a>
+                <p class="post-card-excerpt">
+                    {{ post.excerpt if post.excerpt else post.content[:120] ~ '…' }}
+                </p>
+                <div class="post-card-meta">
+                    <span class="meta-chip">
+                        <i class="fas fa-calendar-alt"></i>
+                        {{ post.created_at.strftime('%b %d, %Y') if post.created_at else '—' }}
+                    </span>
+                    <span class="meta-chip">
+                        <i class="fas fa-clock"></i>
+                        {{ [1, (post.content.split()|length // 200)] | max }} min read
+                    </span>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="post-card-footer">
+                <div style="display:flex; align-items:center; gap:7px;">
+                    <div style="width:22px; height:22px; border-radius:50%; background:var(--accent);
+                                color:#fff; font-size:10px; font-weight:700;
+                                display:flex; align-items:center; justify-content:center;">
+                        {{ post.author.Username[0].upper() if post.author else '?' }}
+                    </div>
+                    <span style="font-size:12px; color:var(--text-secondary);">
+                        {{ post.author.Username if post.author else 'Unknown' }}
+                    </span>
+                </div>
+                <div class="post-card-actions">
+                    <!-- Read button -->
+                    <a href="/post/{{ post.Id }}" class="action-btn" title="Read post">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <!-- Remove bookmark — use bookmark.Id (capital I) -->
+                    <form method="POST" action="/remove_bookmark/{{ bookmark.Id }}" style="display:inline;">
+                        <button type="submit" class="action-btn danger" title="Remove bookmark"
+                                onclick="return confirm('Remove this bookmark?')">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+        {% endif %}
+        {% endfor %}
+
+    {% else %}
+        <div class="empty-full">
+            <i class="fas fa-bookmark"></i>
+            <h3>No saved posts yet</h3>
+            <p>Posts you bookmark will appear here for easy access.</p>
+            <a href="{{ url_for('feed') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-compass"></i> Explore posts
+            </a>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function sortCards(order, btn) {
+    // Update active tab
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+
+    const grid  = document.getElementById('savedGrid');
+    const cards = [...grid.querySelectorAll('.post-card')];
+
+    if (order === 'all') {
+        // restore original DOM order (highest Id = most recent bookmark = first)
+        cards.sort((a, b) => parseInt(b.dataset.date) - parseInt(a.dataset.date));
+    } else if (order === 'recent') {
+        cards.sort((a, b) => parseInt(b.dataset.date) - parseInt(a.dataset.date));
+    } else if (order === 'oldest') {
+        cards.sort((a, b) => parseInt(a.dataset.date) - parseInt(b.dataset.date));
+    }
+
+    cards.forEach(c => grid.appendChild(c));
+}
+</script>
+{% endblock %}

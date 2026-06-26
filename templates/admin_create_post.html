@@ -1,0 +1,845 @@
+{% extends "base.html" %}
+{% block title %}Edit Post – BlogNest Admin{% endblock %}
+{% block page_title %}Edit Post{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+<style>
+/* ── Page Layout ───────────────────────────────────────── */
+.editor-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+    align-items: start;
+}
+
+/* ── Panels ────────────────────────────────────────────── */
+.editor-panel, .sidebar-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.panel-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.panel-body { padding: 20px; }
+
+/* ── Title Input ───────────────────────────────────────── */
+.title-input {
+    width: 100%;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    outline: none;
+    border-bottom: 2px solid var(--border);
+    padding: 8px 0 12px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+}
+.title-input:focus { border-color: var(--accent); }
+.title-input::placeholder { color: var(--text-muted); font-weight: 400; }
+
+/* ── Toolbar ───────────────────────────────────────────── */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 10px 12px;
+    background: var(--bg-page);
+    border-bottom: 1px solid var(--border);
+}
+
+.toolbar-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+    font-weight: 600;
+}
+.toolbar-btn:hover { background: var(--border); color: var(--text-primary); }
+.toolbar-btn.active { background: var(--accent); color: #fff; }
+
+.toolbar-sep {
+    width: 1px;
+    background: var(--border);
+    margin: 4px 4px;
+    align-self: stretch;
+}
+
+.toolbar-select {
+    height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 12px;
+    padding: 0 8px;
+    cursor: pointer;
+}
+
+/* ── Content Editable ──────────────────────────────────── */
+.content-area {
+    min-height: 420px;
+    padding: 20px;
+    outline: none;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text-primary);
+}
+
+.content-area:empty::before {
+    content: "Start writing your post here...";
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.content-area h1, .content-area h2, .content-area h3 {
+    margin: 1.2em 0 0.4em;
+    font-weight: 700;
+    line-height: 1.3;
+}
+.content-area h1 { font-size: 28px; }
+.content-area h2 { font-size: 22px; }
+.content-area h3 { font-size: 18px; }
+
+.content-area p { margin: 0 0 1em; }
+.content-area ul, .content-area ol { margin: 0 0 1em 1.5em; }
+.content-area blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 8px 16px;
+    margin: 1em 0;
+    color: var(--text-secondary);
+    background: var(--bg-page);
+    border-radius: 0 6px 6px 0;
+}
+
+.content-area a { color: var(--accent); text-decoration: underline; }
+.content-area code {
+    background: var(--bg-page);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 13px;
+}
+
+/* Inline images inside editor */
+.content-area img {
+    max-width: 100%;
+    border-radius: 8px;
+    display: block;
+    margin: 12px auto;
+    cursor: pointer;
+    outline: 2px solid transparent;
+    transition: outline 0.15s;
+}
+.content-area img.selected { outline: 2px solid var(--accent); }
+
+/* ── Image Resize Controls ─────────────────────────────── */
+.img-toolbar {
+    display: none;
+    position: fixed;
+    background: #1e1e2e;
+    border-radius: 8px;
+    padding: 6px 10px;
+    gap: 6px;
+    align-items: center;
+    z-index: 999;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+.img-toolbar.show { display: flex; }
+.img-toolbar button {
+    background: none;
+    border: 1px solid #444;
+    color: #fff;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 11px;
+    cursor: pointer;
+}
+.img-toolbar button:hover { background: #333; }
+
+/* ── Sidebar Sections ──────────────────────────────────── */
+.sidebar-panel + .sidebar-panel { margin-top: 16px; }
+
+.field-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    display: block;
+}
+
+.field-input, .field-select, .field-textarea {
+    width: 100%;
+    background: var(--bg-page);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 13px;
+    padding: 8px 12px;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+.field-input:focus, .field-select:focus, .field-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+.field-textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+.field-gap { margin-bottom: 14px; }
+
+/* ── Thumbnail Upload ──────────────────────────────────── */
+.thumb-preview {
+    width: 100%;
+    height: 150px;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 10px;
+}
+.thumb-preview:hover { border-color: var(--accent); background: var(--bg-page); }
+.thumb-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0; left: 0;
+}
+.thumb-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    gap: 6px;
+}
+.thumb-preview:hover .thumb-overlay { opacity: 1; }
+.thumb-placeholder { color: var(--text-muted); font-size: 12px; text-align: center; }
+.thumb-placeholder i { font-size: 28px; margin-bottom: 4px; display: block; color: var(--border); }
+
+/* ── Status Badge ──────────────────────────────────────── */
+.status-row {
+    display: flex;
+    gap: 8px;
+}
+.status-pill {
+    flex: 1;
+    padding: 8px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-secondary);
+}
+.status-pill.active-draft   { border-color: #f59e0b; color: #f59e0b; background: #fffbeb; }
+.status-pill.active-published { border-color: #22c55e; color: #22c55e; background: #f0fdf4; }
+
+/* ── Action Buttons ────────────────────────────────────── */
+.btn-publish {
+    width: 100%;
+    padding: 11px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.btn-publish:hover { background: var(--accent-dark); transform: translateY(-1px); }
+
+.btn-draft {
+    width: 100%;
+    padding: 9px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-draft:hover { background: var(--bg-page); }
+
+/* ── Word Count ────────────────────────────────────────── */
+.word-count {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: right;
+    padding: 8px 20px;
+    border-top: 1px solid var(--border-light);
+}
+
+/* ── Modal (inline image insert) ──────────────────────── */
+.modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+.modal-backdrop.show { display: flex; }
+.modal-box {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    width: 480px;
+    max-width: 95vw;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.modal-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-body { padding: 20px; }
+.modal-foot {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-md);
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+.drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--accent);
+    background: var(--bg-page);
+}
+.drop-zone i { font-size: 32px; margin-bottom: 8px; display: block; }
+.drop-zone input[type="file"] { display: none; }
+
+.or-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 14px 0;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+.or-divider::before, .or-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .editor-layout { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Hidden form submitted on save -->
+{% if post %}
+<form id="postForm" method="POST" action="/admin/posts/{{ post.Id }}/edit">
+{% else %}
+<form id="postForm" method="POST" action="/admin/posts/create">
+{% endif %}
+
+    <input type="hidden" name="title"       id="fTitle">
+    <input type="hidden" name="content"     id="fContent">
+    <input type="hidden" name="excerpt"     id="fExcerpt">
+    <input type="hidden" name="thumbnail"   id="fThumbnail">
+    <input type="hidden" name="status"      id="fStatus" value="{{ post.status }}">
+    <input type="hidden" name="category_Id" id="fCategory" value="{{ post.category_Id or '' }}">
+    <input type="hidden" name="author_id"   id="fAuthor"   value="{{ post.author_id or '' }}">
+</form>
+
+<div class="editor-layout">
+
+    <!-- ── Main Editor ──────────────────────────────── -->
+    <div>
+        <div class="editor-panel">
+
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <!-- Text style -->
+                <select class="toolbar-select" onchange="execCmd('formatBlock', this.value); this.value=''">
+                    <option value="">Paragraph</option>
+                    <option value="h1">Heading 1</option>
+                    <option value="h2">Heading 2</option>
+                    <option value="h3">Heading 3</option>
+                    <option value="blockquote">Quote</option>
+                    <option value="pre">Code Block</option>
+                </select>
+
+                <div class="toolbar-sep"></div>
+
+                <button class="toolbar-btn" onclick="execCmd('bold')"           title="Bold"><b>B</b></button>
+                <button class="toolbar-btn" onclick="execCmd('italic')"         title="Italic"><i>I</i></button>
+                <button class="toolbar-btn" onclick="execCmd('underline')"      title="Underline"><u>U</u></button>
+                <button class="toolbar-btn" onclick="execCmd('strikeThrough')"  title="Strike"><s>S</s></button>
+
+                <div class="toolbar-sep"></div>
+
+                <button class="toolbar-btn" onclick="execCmd('insertUnorderedList')" title="Bullet List">
+                    <i class="fas fa-list-ul"></i>
+                </button>
+                <button class="toolbar-btn" onclick="execCmd('insertOrderedList')" title="Numbered List">
+                    <i class="fas fa-list-ol"></i>
+                </button>
+
+                <div class="toolbar-sep"></div>
+
+                <button class="toolbar-btn" onclick="execCmd('justifyLeft')"   title="Align Left"><i class="fas fa-align-left"></i></button>
+                <button class="toolbar-btn" onclick="execCmd('justifyCenter')" title="Center"><i class="fas fa-align-center"></i></button>
+                <button class="toolbar-btn" onclick="execCmd('justifyRight')"  title="Align Right"><i class="fas fa-align-right"></i></button>
+
+                <div class="toolbar-sep"></div>
+
+                <button class="toolbar-btn" onclick="insertLink()"     title="Insert Link"><i class="fas fa-link"></i></button>
+                <button class="toolbar-btn" onclick="openImgModal()"   title="Insert Image"><i class="fas fa-image"></i></button>
+                <button class="toolbar-btn" onclick="execCmd('insertHorizontalRule')" title="Divider"><i class="fas fa-minus"></i></button>
+
+                <div class="toolbar-sep"></div>
+
+                <button class="toolbar-btn" onclick="execCmd('undo')" title="Undo"><i class="fas fa-undo"></i></button>
+                <button class="toolbar-btn" onclick="execCmd('redo')" title="Redo"><i class="fas fa-redo"></i></button>
+            </div>
+
+            <!-- Title -->
+            <div style="padding: 20px 20px 0;">
+                <input class="title-input" id="titleInput"
+                       placeholder="Post title…"
+                       value="{{ post.title or '' }}">
+            </div>
+
+            <!-- Content -->
+            <div class="content-area" id="editor" contenteditable="true">{{ post.content | safe }}</div>
+
+            <!-- Word count -->
+            <div class="word-count" id="wordCount">0 words</div>
+        </div>
+    </div>
+
+    <!-- ── Sidebar ───────────────────────────────────── -->
+    <div>
+
+        <!-- Publish Actions -->
+        <div class="sidebar-panel">
+            <div class="panel-head"><i class="fas fa-paper-plane"></i> Publish</div>
+            <div class="panel-body">
+                <div class="field-gap">
+                    <span class="field-label">Status</span>
+                    <div class="status-row">
+                        <div class="status-pill {% if post.status == 'draft' %}active-draft{% endif %}"
+                             id="pill-draft" onclick="setStatus('draft')">
+                            <i class="fas fa-file-alt"></i> Draft
+                        </div>
+                        <div class="status-pill {% if post.status == 'published' %}active-published{% endif %}"
+                             id="pill-published" onclick="setStatus('published')">
+                            <i class="fas fa-globe"></i> Published
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-publish" onclick="savePost('published')">
+                    <i class="fas fa-paper-plane"></i> Publish
+                </button>
+                <button class="btn-draft" onclick="savePost('draft')">
+                    Save as Draft
+                </button>
+            </div>
+        </div>
+
+        <!-- Thumbnail -->
+        <div class="sidebar-panel" style="margin-top:16px;">
+            <div class="panel-head"><i class="fas fa-image"></i> Thumbnail</div>
+            <div class="panel-body">
+                <div class="thumb-preview" id="thumbPreview" onclick="document.getElementById('thumbFile').click()">
+                    {% if post.thumbnail %}
+                        <img src="{{ post.thumbnail }}" id="thumbImg" alt="Thumbnail">
+                        <div class="thumb-overlay"><i class="fas fa-pencil-alt"></i> Change</div>
+                    {% else %}
+                        <div class="thumb-placeholder" id="thumbPlaceholder">
+                            <i class="fas fa-image"></i>
+                            Click to upload thumbnail
+                        </div>
+                        <div class="thumb-overlay"><i class="fas fa-upload"></i> Upload</div>
+                    {% endif %}
+                </div>
+                <input type="file" id="thumbFile" accept="image/*" style="display:none" onchange="handleThumb(this)">
+                <input class="field-input" id="thumbUrl"
+                       placeholder="…or paste image URL"
+                       value="{{ post.thumbnail or '' }}"
+                       oninput="setThumbFromUrl(this.value)">
+                {% if post.thumbnail %}
+                <button onclick="clearThumb()" style="margin-top:8px; width:100%; padding:6px; background:none; border:1px solid var(--border); border-radius:6px; color:var(--text-muted); font-size:12px; cursor:pointer;">
+                    <i class="fas fa-trash-alt"></i> Remove thumbnail
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Post Details -->
+        <div class="sidebar-panel" style="margin-top:16px;">
+            <div class="panel-head"><i class="fas fa-sliders-h"></i> Post Details</div>
+            <div class="panel-body">
+
+                <!-- Category -->
+                <div class="field-gap">
+                    <label class="field-label">Category</label>
+                    <select class="field-select" id="categorySelect">
+                        <option value="">— None —</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.Id }}"
+                            {% if cat.Id == post.category_Id %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Author -->
+                <div class="field-gap">
+                    <label class="field-label">Author</label>
+                    <select class="field-select" id="authorSelect">
+                        {% for u in users %}
+                        <option value="{{ u.Id }}"
+                            {% if u.Id == post.author_id %}selected{% endif %}>
+                            {{ u.Username }} ({{ u.role }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Excerpt -->
+                <div class="field-gap">
+                    <label class="field-label">Excerpt / Summary</label>
+                    <textarea class="field-textarea" id="excerptInput"
+                              placeholder="Short description shown in previews…">{{ post.excerpt or '' }}</textarea>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+    <!-- End Sidebar -->
+
+</div>
+
+<!-- ── Inline Image Insert Modal ───────────────────────── -->
+<div class="modal-backdrop" id="imgModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            Insert Image
+            <button onclick="closeImgModal()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:18px;">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="drop-zone" id="dropZone"
+                 onclick="document.getElementById('inlineImgFile').click()"
+                 ondrop="handleImgDrop(event)"
+                 ondragover="event.preventDefault(); this.classList.add('dragover')"
+                 ondragleave="this.classList.remove('dragover')">
+                <i class="fas fa-cloud-upload-alt"></i>
+                Drag & drop an image here, or click to browse
+                <input type="file" id="inlineImgFile" accept="image/*" onchange="insertFromFile(this)">
+            </div>
+            <div class="or-divider">or</div>
+            <input class="field-input" id="imgUrlInput" placeholder="Paste image URL…" style="margin-bottom:8px;">
+            <input class="field-input" id="imgAltInput" placeholder="Alt text (optional)">
+        </div>
+        <div class="modal-foot">
+            <button class="btn-draft" onclick="closeImgModal()" style="width:auto;padding:8px 18px;">Cancel</button>
+            <button class="btn-publish" onclick="insertImgFromUrl()" style="width:auto;padding:8px 18px;">
+                <i class="fas fa-plus"></i> Insert
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Image float toolbar -->
+<div class="img-toolbar" id="imgToolbar">
+    <span style="color:#aaa;font-size:11px;">Size:</span>
+    <button onclick="resizeImg('25%')">25%</button>
+    <button onclick="resizeImg('50%')">50%</button>
+    <button onclick="resizeImg('75%')">75%</button>
+    <button onclick="resizeImg('100%')">Full</button>
+    <button onclick="alignImg('left')">⬅ Left</button>
+    <button onclick="alignImg('center')">⬛ Center</button>
+    <button onclick="alignImg('right')">➡ Right</button>
+    <button onclick="removeImg()" style="color:#f43f5e;">🗑</button>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Helpers ────────────────────────────────────────────
+const editor   = document.getElementById('editor');
+const imgToolbar = document.getElementById('imgToolbar');
+let   selectedImg = null;
+let   savedRange  = null;
+
+function execCmd(cmd, val = null) {
+    editor.focus();
+    document.execCommand(cmd, false, val);
+}
+
+// ── Word Count ─────────────────────────────────────────
+editor.addEventListener('input', updateWordCount);
+function updateWordCount() {
+    const text  = editor.innerText.trim();
+    const words = text ? text.split(/\s+/).length : 0;
+    document.getElementById('wordCount').textContent = `${words} word${words !== 1 ? 's' : ''}`;
+}
+updateWordCount();
+
+// ── Status Pills ───────────────────────────────────────
+function setStatus(s) {
+    document.getElementById('fStatus').value = s;
+    document.getElementById('pill-draft').className     = 'status-pill' + (s==='draft'     ? ' active-draft'     : '');
+    document.getElementById('pill-published').className = 'status-pill' + (s==='published' ? ' active-published' : '');
+}
+
+// ── Save / Submit ──────────────────────────────────────
+function savePost(status) {
+    document.getElementById('fTitle').value    = document.getElementById('titleInput').value.trim();
+    document.getElementById('fContent').value  = editor.innerHTML;
+    document.getElementById('fExcerpt').value  = document.getElementById('excerptInput').value.trim();
+    document.getElementById('fThumbnail').value= document.getElementById('thumbUrl').value.trim();
+    document.getElementById('fStatus').value   = status;
+    document.getElementById('fCategory').value = document.getElementById('categorySelect').value;
+    document.getElementById('fAuthor').value   = document.getElementById('authorSelect').value;
+    document.getElementById('postForm').submit();
+}
+
+// ── Link Insert ────────────────────────────────────────
+function insertLink() {
+    const url = prompt('Enter URL:');
+    if (url) execCmd('createLink', url);
+}
+
+// ── Thumbnail ──────────────────────────────────────────
+function handleThumb(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        setThumbPreview(e.target.result);
+        document.getElementById('thumbUrl').value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function setThumbFromUrl(url) {
+    if (url) setThumbPreview(url);
+}
+
+function setThumbPreview(src) {
+    const preview = document.getElementById('thumbPreview');
+    let img = document.getElementById('thumbImg');
+    if (!img) {
+        document.getElementById('thumbPlaceholder')?.remove();
+        img = document.createElement('img');
+        img.id = 'thumbImg';
+        preview.prepend(img);
+    }
+    img.src = src;
+}
+
+function clearThumb() {
+    document.getElementById('thumbImg')?.remove();
+    document.getElementById('thumbUrl').value = '';
+    const p = document.getElementById('thumbPreview');
+    if (!p.querySelector('.thumb-placeholder')) {
+        const ph = document.createElement('div');
+        ph.className = 'thumb-placeholder';
+        ph.id = 'thumbPlaceholder';
+        ph.innerHTML = '<i class="fas fa-image"></i>Click to upload thumbnail';
+        p.prepend(ph);
+    }
+}
+
+// ── Inline Image Modal ─────────────────────────────────
+function openImgModal() {
+    // Save cursor position
+    const sel = window.getSelection();
+    if (sel.rangeCount) savedRange = sel.getRangeAt(0).cloneRange();
+    document.getElementById('imgModal').classList.add('show');
+}
+
+function closeImgModal() {
+    document.getElementById('imgModal').classList.remove('show');
+    document.getElementById('imgUrlInput').value = '';
+    document.getElementById('imgAltInput').value = '';
+    document.getElementById('dropZone').classList.remove('dragover');
+}
+
+function insertImgFromUrl() {
+    const url = document.getElementById('imgUrlInput').value.trim();
+    const alt = document.getElementById('imgAltInput').value.trim();
+    if (!url) { alert('Please enter an image URL.'); return; }
+    insertImageIntoEditor(url, alt);
+    closeImgModal();
+}
+
+function insertFromFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        insertImageIntoEditor(e.target.result, file.name);
+        closeImgModal();
+    };
+    reader.readAsDataURL(file);
+}
+
+function handleImgDrop(e) {
+    e.preventDefault();
+    document.getElementById('dropZone').classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = ev => { insertImageIntoEditor(ev.target.result, file.name); closeImgModal(); };
+        reader.readAsDataURL(file);
+    }
+}
+
+function insertImageIntoEditor(src, alt = '') {
+    editor.focus();
+    if (savedRange) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+    }
+    const img = document.createElement('img');
+    img.src   = src;
+    img.alt   = alt;
+    img.style.maxWidth = '100%';
+    img.style.display  = 'block';
+    img.style.margin   = '12px auto';
+    img.addEventListener('click', selectImg);
+
+    const sel = window.getSelection();
+    if (sel.rangeCount) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(img);
+        range.setStartAfter(img);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+    } else {
+        editor.appendChild(img);
+    }
+}
+
+// ── Image Selection & Toolbar ──────────────────────────
+document.addEventListener('click', e => {
+    if (e.target.tagName === 'IMG' && editor.contains(e.target)) {
+        selectImg({ target: e.target });
+    } else if (!imgToolbar.contains(e.target)) {
+        deSelectImg();
+    }
+});
+
+function selectImg(e) {
+    if (selectedImg) selectedImg.classList.remove('selected');
+    selectedImg = e.target;
+    selectedImg.classList.add('selected');
+    const rect = selectedImg.getBoundingClientRect();
+    imgToolbar.style.top  = (rect.bottom + window.scrollY + 8) + 'px';
+    imgToolbar.style.left = (rect.left + window.scrollX) + 'px';
+    imgToolbar.classList.add('show');
+}
+
+function deSelectImg() {
+    if (selectedImg) selectedImg.classList.remove('selected');
+    selectedImg = null;
+    imgToolbar.classList.remove('show');
+}
+
+function resizeImg(w) {
+    if (!selectedImg) return;
+    selectedImg.style.width    = w;
+    selectedImg.style.maxWidth = '100%';
+}
+
+function alignImg(dir) {
+    if (!selectedImg) return;
+    selectedImg.style.display     = 'block';
+    selectedImg.style.marginLeft  = dir === 'left'   ? '0'    : dir === 'right'  ? 'auto' : 'auto';
+    selectedImg.style.marginRight = dir === 'right'  ? '0'    : dir === 'left'   ? 'auto' : 'auto';
+    if (dir === 'center') { selectedImg.style.marginLeft = 'auto'; selectedImg.style.marginRight = 'auto'; }
+}
+
+function removeImg() {
+    if (!selectedImg) return;
+    selectedImg.remove();
+    deSelectImg();
+}
+
+// ── Keyboard shortcuts ─────────────────────────────────
+editor.addEventListener('keydown', e => {
+    if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'b') { e.preventDefault(); execCmd('bold'); }
+        if (e.key === 'i') { e.preventDefault(); execCmd('italic'); }
+        if (e.key === 'u') { e.preventDefault(); execCmd('underline'); }
+        if (e.key === 's') { e.preventDefault(); savePost(document.getElementById('fStatus').value || 'draft'); }
+    }
+});
+</script>
+{% endblock %}

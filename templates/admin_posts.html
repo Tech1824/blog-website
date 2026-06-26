@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+{% block title %}Manage Posts – Admin{% endblock %}
+{% block page_title %}Manage Posts{% endblock %}
+
+{% block extra_css %}
+<style>
+.toolbar {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:20px; gap:12px; flex-wrap:wrap;
+}
+.toolbar-left { display:flex; align-items:center; gap:10px; }
+.filter-select {
+    padding:7px 12px; border:1px solid var(--border);
+    border-radius:var(--radius-md); font-size:13px;
+    color:var(--text-primary); background:var(--bg-card); outline:none;
+}
+.filter-select:focus { border-color:var(--accent); }
+
+.tbl-card {
+    background:var(--bg-card); border:1px solid var(--border);
+    border-radius:var(--radius-lg); overflow:hidden;
+}
+.admin-table { width:100%; border-collapse:collapse; }
+.admin-table th {
+    text-align:left; font-size:11px; font-weight:600;
+    text-transform:uppercase; letter-spacing:.06em;
+    color:var(--text-muted); padding:12px 20px;
+    background:var(--bg-page); border-bottom:1px solid var(--border);
+}
+.admin-table td {
+    padding:12px 20px; font-size:13px; color:var(--text-primary);
+    border-bottom:1px solid var(--border-light); vertical-align:middle;
+}
+.admin-table tr:last-child td { border-bottom:none; }
+.admin-table tr:hover td { background:#fafafa; }
+
+.post-title-cell { max-width:220px; }
+.post-title-main { font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.post-title-cat  { font-size:11px; color:var(--text-muted); margin-top:2px; }
+
+.badge-pill {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:3px 10px; border-radius:20px;
+    font-size:11px; font-weight:600;
+}
+.bp-green  { background:#dcfce7; color:#166534; }
+.bp-yellow { background:#fef9c3; color:#854d0e; }
+.bp-gray   { background:#f3f4f6; color:#4b5563; }
+
+.stat-cell { display:flex; align-items:center; gap:12px; }
+.stat-pill { display:flex; align-items:center; gap:4px; font-size:12px; color:var(--text-secondary); }
+
+.action-btns { display:flex; gap:6px; flex-wrap:nowrap; }
+.act-btn {
+    padding:5px 10px; border-radius:var(--radius-sm);
+    font-size:12px; font-weight:500; border:none; cursor:pointer;
+    transition:background var(--transition); text-decoration:none;
+    display:inline-flex; align-items:center; gap:4px; white-space:nowrap;
+}
+.act-edit   { background:#eff6ff; color:#3b82f6; }
+.act-edit:hover   { background:#dbeafe; }
+.act-toggle { background:#fef9c3; color:#854d0e; }
+.act-toggle:hover { background:#fef08a; }
+.act-delete { background:#fee2e2; color:#dc2626; }
+.act-delete:hover { background:#fecaca; }
+
+.empty-state { padding:40px 20px; text-align:center; color:var(--text-muted); font-size:13px; }
+.empty-state i { font-size:32px; margin-bottom:10px; display:block; opacity:.4; }
+
+/* ── Modals ─────────────────────────────────────────────── */
+.modal-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,.45); z-index:500;
+    align-items:center; justify-content:center;
+}
+.modal-overlay.open { display:flex; }
+.modal-box {
+    background:var(--bg-card); border-radius:var(--radius-lg);
+    width:520px; max-width:94vw; box-shadow:var(--shadow-md);
+    max-height:90vh; overflow-y:auto;
+}
+.modal-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 24px 14px; border-bottom:1px solid var(--border-light);
+    position:sticky; top:0; background:var(--bg-card); z-index:1;
+}
+.modal-title { font-size:15px; font-weight:700; color:var(--text-primary); }
+.modal-close {
+    background:none; border:none; font-size:20px;
+    color:var(--text-muted); cursor:pointer; line-height:1; padding:0 4px;
+}
+.modal-close:hover { color:var(--text-primary); }
+.modal-body   { padding:20px 24px; }
+.modal-footer {
+    padding:14px 24px; border-top:1px solid var(--border-light);
+    display:flex; justify-content:flex-end; gap:10px;
+    position:sticky; bottom:0; background:var(--bg-card);
+}
+
+/* ── Form elements inside modals ────────────────────────── */
+.form-group   { margin-bottom:16px; }
+.form-group:last-child { margin-bottom:0; }
+.form-label   { display:block; font-size:13px; font-weight:500; color:var(--text-primary); margin-bottom:6px; }
+.form-label span { color:#ef4444; }
+.form-input, .form-select, .form-textarea {
+    width:100%; padding:9px 12px; border:1px solid var(--border);
+    border-radius:var(--radius-md); font-size:13px; color:var(--text-primary);
+    background:var(--bg-page); outline:none; box-sizing:border-box;
+    transition:border-color var(--transition); font-family:inherit;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color:var(--accent); background:#fff;
+}
+.form-textarea { resize:vertical; min-height:140px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Toolbar -->
+<div class="toolbar">
+    <div class="toolbar-left">
+        <select class="filter-select" onchange="filterStatus(this.value)">
+            <option value="">All Status</option>
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
+        </select>
+        <span style="font-size:13px; color:var(--text-muted);" id="postCount">
+            {{ posts | length }} post{{ 's' if posts | length != 1 }}
+        </span>
+    </div>
+    <a href="/admin/posts/create" class="btn btn-primary">
+      <i class="fas fa-plus"></i> Create Post
+   </a>
+</div>
+
+<!-- Table -->
+<div class="tbl-card">
+    {% if posts %}
+    <table class="admin-table" id="postsTable">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Status</th>
+                <th>Engagement</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in posts %}
+            <tr data-status="{{ p.status }}">
+                <td style="color:var(--text-muted);">{{ loop.index }}</td>
+                <td class="post-title-cell">
+                    <div class="post-title-main" title="{{ p.title }}">{{ p.title }}</div>
+                    <div class="post-title-cat">
+                        {{ p.category.name if p.category else 'Uncategorised' }}
+                    </div>
+                </td>
+                <td>{{ p.author.Username if p.author else '—' }}</td>
+                <td>
+                    <span class="badge-pill {% if p.status == 'published' %}bp-green{% else %}bp-yellow{% endif %}">
+                        <i class="fas {% if p.status == 'published' %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
+                        {{ p.status | capitalize }}
+                    </span>
+                </td>
+                <td>
+                    <div class="stat-cell">
+                        <span class="stat-pill">
+                            <i class="fas fa-heart" style="color:#f43f5e;"></i>
+                            {{ p.likes | length }}
+                        </span>
+                        <span class="stat-pill">
+                            <i class="fas fa-comment" style="color:var(--accent);"></i>
+                            {{ p.comments | length }}
+                        </span>
+                    </div>
+                </td>
+                <td style="font-size:12px; color:var(--text-muted); white-space:nowrap;">
+                    {{ p.created_at.strftime('%b %d, %Y') if p.created_at else '—' }}
+                </td>
+                <td>
+                    <div class="action-btns">
+                        <!-- Edit button — opens edit modal pre-filled -->
+                       
+                        <a href="/admin/posts/{{ p.Id }}/edit" class="act-btn act-edit">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                      
+
+                        <!-- Publish / Unpublish toggle -->
+                        <form method="POST" action="/admin/posts/{{ p.Id }}/toggle" style="display:inline;">
+                            <button type="submit" class="act-btn act-toggle">
+                                <i class="fas {% if p.status == 'published' %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                                {{ 'Unpublish' if p.status == 'published' else 'Publish' }}
+                            </button>
+                        </form>
+
+                        <!-- Delete -->
+                        <button class="act-btn act-delete"
+                            data-id="{{ p.Id }}"
+                            data-title="{{ p.title | e }}"
+                            onclick="confirmDeleteFromBtn(this)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-file-alt"></i>
+        No posts found.
+    </div>
+    {% endif %}
+</div>
+
+
+<!-- ══════════════ CREATE MODAL ══════════════ -->
+<div class="modal-overlay" id="createModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <span class="modal-title">
+                <i class="fas fa-plus" style="color:var(--accent); margin-right:8px;"></i>
+                Create New Post
+            </span>
+            <button class="modal-close" onclick="closeModal('createModal')">×</button>
+        </div>
+        <form method="POST" action="/admin/posts/create">
+            <div class="modal-body">
+
+                <div class="form-group">
+                    <label class="form-label">Title <span>*</span></label>
+                    <input type="text" name="title" class="form-input"
+                           placeholder="Enter post title…" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Content <span>*</span></label>
+                    <textarea name="content" class="form-textarea"
+                              placeholder="Write your post content here…" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Excerpt</label>
+                    <input type="text" name="excerpt" class="form-input"
+                           placeholder="Short summary (optional)…">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Thumbnail URL</label>
+                    <input type="text" name="thumbnail" class="form-input"
+                           placeholder="https://… (optional)">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select name="category_Id" class="form-select">
+                            <option value="">— None —</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.Id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="draft">Draft</option>
+                            <option value="published">Published</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm"
+                        onclick="closeModal('createModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-save"></i> Create Post
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- ══════════════ EDIT MODAL ══════════════ -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <span class="modal-title">
+                <i class="fas fa-edit" style="color:var(--accent); margin-right:8px;"></i>
+                Edit Post
+            </span>
+            <button class="modal-close" onclick="closeModal('editModal')">×</button>
+        </div>
+        <form method="POST" id="editForm">
+            <div class="modal-body">
+
+                <div class="form-group">
+                    <label class="form-label">Title <span>*</span></label>
+                    <input type="text" name="title" id="editTitle" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Content <span>*</span></label>
+                    <textarea name="content" id="editContent" class="form-textarea" required></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select name="category_Id" id="editCategory" class="form-select">
+                            <option value="">— None —</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.Id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select name="status" id="editStatus" class="form-select">
+                            <option value="draft">Draft</option>
+                            <option value="published">Published</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm"
+                        onclick="closeModal('editModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- DELETE MODAL-->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-box" style="width:420px;">
+        <div class="modal-header">
+            <span class="modal-title" style="color:#dc2626;">
+                <i class="fas fa-trash" style="margin-right:8px;"></i>Delete Post
+            </span>
+            <button class="modal-close" onclick="closeModal('deleteModal')">×</button>
+        </div>
+        <div style="padding:20px 24px; font-size:14px; color:var(--text-secondary); line-height:1.6;"
+             id="deleteModalBody"></div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('deleteModal')">Cancel</button>
+            <form id="deleteForm" method="POST" style="display:inline;">
+                <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="fas fa-trash"></i> Delete
+                    
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── Open / close helpers ─────────────────────────────── */
+function openCreate() {
+    document.getElementById('createModal').classList.add('open');
+}
+
+function openEditFromBtn(btn) {
+    const id         = btn.dataset.id;
+    const title      = btn.dataset.title;
+    const content    = btn.dataset.content;
+    const status     = btn.dataset.status;
+    const categoryId = btn.dataset.category;
+
+    document.getElementById('editForm').action = `/admin/posts/${id}/edit`;
+    document.getElementById('editTitle').value   = title;
+    document.getElementById('editContent').value = content;
+    document.getElementById('editStatus').value  = status;
+    const catSelect = document.getElementById('editCategory');
+    catSelect.value = categoryId || '';
+    document.getElementById('editModal').classList.add('open');
+}
+
+
+function confirmDeleteFromBtn(btn) {
+    const postId = btn.dataset.id;
+    const title  = btn.dataset.title;
+    document.getElementById('deleteModalBody').textContent =
+        `Are you sure you want to delete "${title}"? This cannot be undone.`;
+    document.getElementById('deleteForm').action = `/admin/posts/${postId}/delete`;
+    document.getElementById('deleteModal').classList.add('open');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+}
+
+/* Close on backdrop click */
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e) {
+        if (e.target === this) closeModal(this.id);
+    });
+});
+
+/* ── Status filter ────────────────────────────────────── */
+function filterStatus(status) {
+    let visible = 0;
+    document.querySelectorAll('#postsTable tbody tr').forEach(row => {
+        const show = !status || row.dataset.status === status;
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    const total = document.querySelectorAll('#postsTable tbody tr').length;
+    const count = status ? visible : total;
+    document.getElementById('postCount').textContent =
+        `${count} post${count !== 1 ? 's' : ''}`;
+}
+</script>
+{% endblock %}

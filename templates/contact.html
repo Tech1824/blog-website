@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact – BlogNest</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+
+        nav {
+            width:100%; background:#fff; padding:18px 8%;
+            display:flex; justify-content:space-between; align-items:center;
+            box-shadow:0 2px 15px rgba(0,0,0,.08);
+            position:sticky; top:0; z-index:100;
+        }
+        .logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+        .logo i { color:#2563eb; font-size:28px; }
+        .logo h2 { color:#1e293b; font-size:1.3rem; }
+        .nav-links { display:flex; list-style:none; gap:35px; }
+        .nav-links a { text-decoration:none; color:#334155; font-weight:500; transition:.3s; }
+        .nav-links a:hover, .nav-links a.active { color:#2563eb; }
+        .right-nav { display:flex; align-items:center; gap:10px; }
+        .search-box { position:relative; }
+        .search-box input {
+            width:230px; padding:9px 38px 9px 14px;
+            border:1px solid #dbe2ea; border-radius:8px; outline:none; font-size:13px;
+        }
+        .search-box input:focus { border-color:#2563eb; }
+        .search-box button {
+            position:absolute; right:11px; top:50%; transform:translateY(-50%);
+            background:none; border:none; cursor:pointer; color:#64748b;
+        }
+        .btn-nav { padding:9px 16px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13px; transition:.3s; }
+        .btn-login  { border:1px solid #2563eb; color:#2563eb; }
+        .btn-register { background:#2563eb; color:#fff; }
+        .btn-login:hover, .btn-register:hover { transform:translateY(-2px); }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
+            padding: 80px 8% 70px;
+            text-align: center;
+            color: #fff;
+        }
+        .hero h1 { font-size: 2.6rem; font-weight: 700; margin-bottom: 14px; }
+        .hero p  { font-size: 1.05rem; opacity: .85; max-width: 500px; margin: 0 auto; }
+
+        /* Main layout */
+        .main-wrap {
+            max-width: 1050px;
+            margin: 0 auto;
+            padding: 60px 24px 80px;
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 48px;
+            align-items: start;
+        }
+
+        /* Contact form card */
+        .form-card {
+            background: #fff;
+            border-radius: 18px;
+            padding: 36px 32px;
+            box-shadow: 0 8px 32px rgba(0,0,0,.09);
+        }
+        .form-card h2 {
+            font-size: 1.3rem; font-weight: 700;
+            color: #1e293b; margin-bottom: 6px;
+        }
+        .form-card .subtitle {
+            font-size: 13px; color: #64748b; margin-bottom: 28px;
+        }
+
+        .form-group { margin-bottom: 18px; }
+        .form-row   { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        .form-label {
+            display:block; font-size:13px; font-weight:600;
+            color:#374151; margin-bottom:6px;
+        }
+        .form-label span { color:#ef4444; }
+        .form-input, .form-select, .form-textarea {
+            width:100%; padding:10px 14px;
+            border:1px solid #e2e8f0; border-radius:8px;
+            font-size:13px; color:#1e293b;
+            background:#f8fafc; outline:none;
+            transition:border-color .2s, background .2s;
+            font-family:inherit; box-sizing:border-box;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            border-color:#2563eb; background:#fff;
+            box-shadow: 0 0 0 3px rgba(37,99,235,.08);
+        }
+        .form-textarea { resize:vertical; min-height:130px; line-height:1.6; }
+
+        .btn-submit {
+            width:100%; padding:12px;
+            background:#2563eb; color:#fff;
+            border:none; border-radius:8px;
+            font-size:14px; font-weight:700;
+            cursor:pointer; transition:.2s;
+            display:flex; align-items:center; justify-content:center; gap:8px;
+        }
+        .btn-submit:hover { background:#1d4ed8; transform:translateY(-1px); }
+
+        /* Flash messages */
+        .flash-success {
+            background:#f0fdf4; border:1px solid #86efac;
+            color:#166534; padding:12px 16px; border-radius:8px;
+            font-size:13px; margin-bottom:20px;
+            display:flex; align-items:center; gap:8px;
+        }
+        .flash-error {
+            background:#fef2f2; border:1px solid #fca5a5;
+            color:#991b1b; padding:12px 16px; border-radius:8px;
+            font-size:13px; margin-bottom:20px;
+            display:flex; align-items:center; gap:8px;
+        }
+
+        /* Sidebar info */
+        .info-col { display:flex; flex-direction:column; gap:20px; }
+
+        .info-card {
+            background:#fff; border-radius:14px; padding:24px 22px;
+            box-shadow: 0 4px 18px rgba(0,0,0,.07);
+        }
+        .info-card h3 {
+            font-size:14px; font-weight:700; color:#1e293b;
+            margin-bottom:16px; display:flex; align-items:center; gap:8px;
+        }
+
+        .info-item {
+            display:flex; align-items:flex-start; gap:14px;
+            padding:10px 0; border-bottom:1px solid #f1f5f9;
+        }
+        .info-item:last-child { border-bottom:none; padding-bottom:0; }
+        .info-icon {
+            width:36px; height:36px; border-radius:9px;
+            display:flex; align-items:center; justify-content:center;
+            font-size:15px; flex-shrink:0;
+        }
+        .info-text strong { display:block; font-size:13px; color:#1e293b; margin-bottom:2px; }
+        .info-text span   { font-size:12px; color:#64748b; }
+
+        /* FAQ */
+        .faq-item {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 14px 0;
+            cursor: pointer;
+        }
+        .faq-item:last-child { border-bottom:none; }
+        .faq-q {
+            font-size:13px; font-weight:600; color:#1e293b;
+            display:flex; justify-content:space-between; align-items:center;
+            gap:10px;
+        }
+        .faq-q i { color:#2563eb; font-size:12px; transition:transform .2s; }
+        .faq-a {
+            font-size:12px; color:#64748b; line-height:1.6;
+            margin-top:8px; display:none;
+        }
+        .faq-item.open .faq-a   { display:block; }
+        .faq-item.open .faq-q i { transform:rotate(180deg); }
+
+        /* Social links */
+        .social-row { display:flex; gap:10px; margin-top:4px; }
+        .social-btn {
+            width:36px; height:36px; border-radius:8px;
+            display:flex; align-items:center; justify-content:center;
+            text-decoration:none; font-size:15px; transition:.2s;
+        }
+        .social-btn:hover { transform:translateY(-2px); }
+
+        footer { background:#1e293b; color:#94a3b8; text-align:center; padding:28px; font-size:13px; }
+        footer a { color:#60a5fa; text-decoration:none; }
+
+        @media(max-width:900px) {
+            .main-wrap { grid-template-columns:1fr; }
+            .nav-links  { display:none; }
+            .hero h1    { font-size:2rem; }
+            .form-row   { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <a href="/" class="logo">
+        <i class="fas fa-feather-alt"></i>
+        <h2>BlogNest</h2>
+    </a>
+    <ul class="nav-links">
+        <li><a href="/"><i class="fas fa-house"></i> Home</a></li>
+        <li><a href="/categories"><i class="fas fa-layer-group"></i> Categories</a></li>
+        <li><a href="/about"><i class="fas fa-circle-info"></i> About</a></li>
+        <li><a href="/contact" class="active"><i class="fas fa-envelope"></i> Contact</a></li>
+    </ul>
+    <div class="right-nav">
+        <form action="/search" method="GET">
+            <div class="search-box">
+                <input type="text" name="q" placeholder="Search blogs...">
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </div>
+        </form>
+        <a href="/login"    class="btn-nav btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
+        <a href="/register" class="btn-nav btn-register"><i class="fas fa-user-plus"></i> Register</a>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <h1><i class="fas fa-envelope" style="margin-right:10px;"></i>Get In Touch</h1>
+    <p>Have a question, feedback, or just want to say hello? We'd love to hear from you.</p>
+</section>
+
+<!-- MAIN -->
+<div class="main-wrap">
+
+    <!-- LEFT: Contact Form -->
+    <div class="form-card">
+        <h2>Send us a Message</h2>
+        <p class="subtitle">We typically respond within 24 hours.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for cat, msg in messages %}
+                <div class="flash-{{ 'success' if cat == 'success' else 'error' }}">
+                    <i class="fas fa-{{ 'check-circle' if cat == 'success' else 'exclamation-circle' }}"></i>
+                    {{ msg }}
+                </div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST" action="/contact">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">First Name <span>*</span></label>
+                    <input type="text" name="first_name" class="form-input"
+                           placeholder="John" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" name="last_name" class="form-input"
+                           placeholder="Doe">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email Address <span>*</span></label>
+                <input type="email" name="email" class="form-input"
+                       placeholder="john@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Subject <span>*</span></label>
+                <select name="subject" class="form-select" required>
+                    <option value="">— Select a topic —</option>
+                    <option value="general">General Enquiry</option>
+                    <option value="bug">Report a Bug</option>
+                    <option value="content">Content / Post Issue</option>
+                    <option value="account">Account Help</option>
+                    <option value="partnership">Partnership / Collaboration</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Message <span>*</span></label>
+                <textarea name="message" class="form-textarea"
+                          placeholder="Tell us how we can help…" required></textarea>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <i class="fas fa-paper-plane"></i> Send Message
+            </button>
+        </form>
+    </div>
+
+    <!-- RIGHT: Info + FAQ -->
+    <div class="info-col">
+
+        <!-- Contact details -->
+        <div class="info-card">
+            <h3><i class="fas fa-address-book" style="color:#2563eb;"></i> Contact Info</h3>
+
+            <div class="info-item">
+                <div class="info-icon" style="background:#eff6ff; color:#2563eb;">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="info-text">
+                    <strong>Email</strong>
+                    <span>admin227q@gmail.com</span>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-icon" style="background:#f0fdf4; color:#16a34a;">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="info-text">
+                    <strong>Response Time</strong>
+                    <span>Within 24 hours on weekdays</span>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-icon" style="background:#f5f3ff; color:#7c3aed;">
+                    <i class="fas fa-globe"></i>
+                </div>
+                <div class="info-text">
+                    <strong>Platform</strong>
+                    <span>Available worldwide</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Social -->
+        <div class="info-card">
+            <h3><i class="fas fa-share-nodes" style="color:#2563eb;"></i> Follow Us</h3>
+            <p style="font-size:12px; color:#64748b; margin-bottom:14px;">
+                Stay updated with the latest posts and community news.
+            </p>
+            <div class="social-row">
+                <a href="#" class="social-btn" style="background:#1da1f2; color:#fff;" title="Twitter">
+                    <i class="fab fa-twitter"></i>
+                </a>
+                <a href="#" class="social-btn" style="background:#1877f2; color:#fff;" title="Facebook">
+                    <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="#" class="social-btn" style="background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); color:#fff;" title="Instagram">
+                    <i class="fab fa-instagram"></i>
+                </a>
+                <a href="#" class="social-btn" style="background:#0a66c2; color:#fff;" title="LinkedIn">
+                    <i class="fab fa-linkedin-in"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- FAQ -->
+        <div class="info-card">
+            <h3><i class="fas fa-circle-question" style="color:#2563eb;"></i> Common Questions</h3>
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-q">How do I become an author? <i class="fas fa-chevron-down"></i></div>
+                <div class="faq-a">Register for a free account and contact the admin to request author access. We review all applications within 48 hours.</div>
+            </div>
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-q">Can I delete my account? <i class="fas fa-chevron-down"></i></div>
+                <div class="faq-a">Yes — go to Settings → Delete Account. This action is permanent and removes all your data.</div>
+            </div>
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-q">How do I report inappropriate content? <i class="fas fa-chevron-down"></i></div>
+                <div class="faq-a">Use this contact form with the subject "Content / Post Issue" and include the post link. We'll review it promptly.</div>
+            </div>
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-q">Is BlogNest free to use? <i class="fas fa-chevron-down"></i></div>
+                <div class="faq-a">Absolutely. Reading, writing, and interacting with posts is completely free for all members.</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2026 <a href="/">BlogNest</a> · All rights reserved · <a href="/about">About Us</a></p>
+</footer>
+
+<script>
+function toggleFaq(el) {
+    el.classList.toggle('open');
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Search – BlogNest{% endblock %}
+{% block page_title %}Search{% endblock %}
+
+{% block content %}
+<h2>Search Results for "{{ query }}"</h2>
+
+{% if results %}
+    {% for post in results %}
+        <div onclick="window.location='/post/{{ post.Id }}'" 
+            style="margin-bottom: 20px; padding: 16px; 
+                 background: var(--bg-card); 
+                 border: 1px solid var(--border); 
+                 border-radius: 8px;
+                 cursor: pointer;
+                 transition: box-shadow 0.2s, transform 0.2s;"
+            onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'; this.style.transform='translateY(-2px)'"
+            onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'">
+    
+        <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                   {{ post.title }}
+        </div>
+        <div style="font-size: 13px; color: var(--text-secondary);">
+              {{ post.excerpt or post.content[:100] ~ '...' }}
+        </div>
+      </div>
+    {% endfor %}
+{% else %}
+    <p style="color: var(--text-muted);">
+        {% if query %}
+            No results found for "{{ query }}". Try a different keyword.
+        {% else %}
+            Enter a keyword above to search posts.
+        {% endif %}
+    </p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,470 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard – BlogNest{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Dashboard Layout ─────────────────────────────────── */
+.dashboard-grid {
+    display: grid;
+    gap: 24px;
+}
+
+/* ── Welcome Banner ───────────────────────────────────── */
+.welcome-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.welcome-text {
+    font-size: 15px;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.welcome-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* ── Stats Grid ───────────────────────────────────────── */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: box-shadow var(--transition), transform var(--transition);
+}
+
+.stat-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.stat-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.icon-blue   { background: #eff6ff; color: #3b82f6; }
+.icon-purple { background: #f5f3ff; color: #8b5cf6; }
+.icon-red    { background: #fff1f2; color: #f43f5e; }
+.icon-amber  { background: #fffbeb; color: #f59e0b; }
+
+.stat-info { display: flex; flex-direction: column; gap: 2px; }
+
+.stat-number {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.stat-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+
+/* ── Two-column Section ───────────────────────────────── */
+.two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* ── Section Card ─────────────────────────────────────── */
+.section-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.view-all {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+    transition: color var(--transition);
+}
+
+.view-all:hover { color: var(--accent-dark); }
+
+/* ── Post Item (Last Read) ────────────────────────────── */
+.post-list { padding: 8px 0; }
+
+.post-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 20px;
+    transition: background var(--transition);
+    cursor: pointer;
+}
+
+.post-item:hover { background: var(--bg-page); }
+
+.post-thumb {
+    width: 56px;
+    height: 42px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--border);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.post-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.post-info { flex: 1; min-width: 0; }
+
+.post-title-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+
+.post-excerpt {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.post-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+/* ── Comment Item ─────────────────────────────────────── */
+.comment-list { padding: 8px 0; }
+
+.comment-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 20px;
+    transition: background var(--transition);
+}
+
+.comment-item:hover { background: var(--bg-page); }
+
+.comment-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.comment-info { flex: 1; min-width: 0; }
+
+.comment-post-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.comment-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.comment-date {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* ── Liked Posts ──────────────────────────────────────── */
+.liked-list { padding: 8px 0; }
+
+.liked-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 20px;
+    transition: background var(--transition);
+}
+
+.liked-item:hover { background: var(--bg-page); }
+
+.liked-item i {
+    color: #f43f5e;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.liked-title {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.liked-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+/* ── Empty State ──────────────────────────────────────── */
+.empty-state {
+    padding: 32px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.empty-state i {
+    font-size: 28px;
+    margin-bottom: 8px;
+    display: block;
+    opacity: .4;
+}
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .two-col   { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+    .stats-row { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- Welcome -->
+<div class="welcome-banner">
+    <p class="welcome-text">
+        Welcome back, <span class="welcome-name">{{ session.get('username', 'User')}}</span>! 👋
+    </p>
+</div>
+
+<div class="dashboard-grid mt-16">
+
+    <!-- ── Stat Cards ─────────────────────────── -->
+    <div class="stats-row">
+
+        <div class="stat-card">
+            <div class="stat-icon-wrap icon-blue">
+                <i class="fas fa-book-open"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-number">{{ posts_read_count or 0 }}</span>
+                <span class="stat-label">Posts Read</span>
+                <span class="stat-sub">Total</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon-wrap icon-purple">
+                <i class="fas fa-comment-dots"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-number">{{ comments_count or 0 }}</span>
+                <span class="stat-label">Comments</span>
+                <span class="stat-sub">You added</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon-wrap icon-red">
+                <i class="fas fa-heart"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-number">{{ liked_count or 0 }}</span>
+                <span class="stat-label">Liked Posts</span>
+                <span class="stat-sub">Total</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon-wrap icon-amber">
+                <i class="fas fa-bookmark"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-number">{{ bookmarks_count or 0 }}</span>
+                <span class="stat-label">Bookmarks</span>
+                <span class="stat-sub">Saved</span>
+            </div>
+        </div>
+
+    </div>
+   
+
+    <!-- ── Last Read + Recent Comments ───────── -->
+    <div class="two-col">
+
+        <!-- Last Read -->
+        <div class="section-card">
+            <div class="section-head">
+                <span class="section-title">Last Read / Viewed</span>
+                <a href="/saved" class="view-all">View all</a>
+            </div>
+            <div class="post-list">
+                {% if last_read %}
+                    {% for post in last_read %}
+                    <div class="post-item" onclick="window.location='/post/{{ post.Id }}'">
+                        <div class="post-thumb">
+                            {% if post.thumbnail %}
+                                <img src="{{ post.thumbnail }}" alt="{{ post.title }}">
+                            {% else %}
+                                📄
+                            {% endif %}
+                        </div>
+                        <div class="post-info">
+                            <div class="post-title-text">{{ post.title }}</div>
+                            <div class="post-excerpt">{{ post.excerpt or post.content[:60] ~ '…' }}</div>
+                        </div>
+                        <span class="post-date">
+                            {{ post.created_at.strftime('%b %d, %Y') if post.created_at else '' }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-book-open"></i>
+                        No posts read yet. Start exploring!
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Comments -->
+        <div class="section-card">
+            <div class="section-head">
+                <span class="section-title">Recent Comments</span>
+                <a href="/profile" class="view-all">View all</a>
+            </div>
+            <div class="comment-list">
+                {% if recent_comments %}
+                    {% set colors = ['#eff6ff', '#f5f3ff', '#fff1f2', '#f0fdf4'] %}
+                    {% set icon_colors = ['#3b82f6', '#8b5cf6', '#f43f5e', '#22c55e'] %}
+                    {% for comment in recent_comments %}
+                    <div class="comment-item">
+                        <div class="comment-icon"
+                             style="background:{{ colors[loop.index0 % 4] }};
+                                    color:{{ icon_colors[loop.index0 % 4] }}">
+                            <i class="fas fa-comment-alt"></i>
+                        </div>
+                        <div class="comment-info">
+                            <div class="comment-post-title">{{ comment.post.title if comment.post else 'Unknown Post' }}</div>
+                            <div class="comment-text">{{ comment.content }}</div>
+                            <div class="comment-date">
+                                {{ comment.created_at.strftime('%b %d, %Y') if comment.created_at else '' }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-comment-slash"></i>
+                        No comments yet. Join the conversation!
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+    <!-- End Two Col -->
+
+    <!-- ── Liked Posts ────────────────────────── -->
+    <div class="section-card">
+        <div class="section-head">
+            <span class="section-title">Liked Posts</span>
+            <a href="/feed" class="view-all">View all</a>
+        </div>
+        <div class="liked-list">
+            {% if liked_posts %}
+                {% for like in liked_posts %}
+                <div class="liked-item" onclick="window.location='/post/{{ like.post.Id }}'">
+                    <i class="fas fa-heart"></i>
+                    <span class="liked-title">{{ like.post.title if like.post else 'Unknown Post' }}</span>
+                    <span class="liked-date">
+                        {{ like.created_at.strftime('%b %d, %Y') if like.created_at else '' }}
+                    </span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-heart"></i>
+                    No liked posts yet. Like posts you enjoy!
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div><!-- end dashboard-grid -->
+{% endblock %}

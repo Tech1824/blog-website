@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard – BlogNest{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Stats Row ─────────────────────────────────────────── */
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.a-stat {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: box-shadow var(--transition), transform var(--transition);
+}
+.a-stat:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+.a-stat-icon {
+    width: 48px; height: 48px;
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+}
+.ic-indigo { background:#eef2ff; color:#6366f1; }
+.ic-emerald { background:#ecfdf5; color:#10b981; }
+.ic-sky     { background:#f0f9ff; color:#0ea5e9; }
+.ic-rose    { background:#fff1f2; color:#f43f5e; }
+.ic-amber   { background:#fffbeb; color:#f59e0b; }
+.ic-violet  { background:#f5f3ff; color:#8b5cf6; }
+
+.a-stat-info { display:flex; flex-direction:column; gap:2px; }
+.a-stat-num  { font-size:26px; font-weight:700; color:var(--text-primary); line-height:1; }
+.a-stat-lbl  { font-size:13px; font-weight:500; color:var(--text-primary); }
+.a-stat-sub  { font-size:11px; color:var(--text-muted); }
+
+/* ── Grid Layout ───────────────────────────────────────── */
+.admin-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; }
+.admin-grid-3 { display:grid; grid-template-columns:2fr 1fr; gap:20px; }
+
+/* ── Section Card ──────────────────────────────────────── */
+.sec-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+.sec-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px 12px;
+    border-bottom:1px solid var(--border-light);
+}
+.sec-title { font-size:14px; font-weight:600; color:var(--text-primary); }
+.sec-link  { font-size:12px; font-weight:500; color:var(--accent); }
+.sec-link:hover { color:var(--accent-dark); }
+
+/* ── Table ─────────────────────────────────────────────── */
+.admin-table { width:100%; border-collapse:collapse; }
+.admin-table th {
+    text-align:left; font-size:11px; font-weight:600;
+    text-transform:uppercase; letter-spacing:.06em;
+    color:var(--text-muted); padding:10px 20px;
+    border-bottom:1px solid var(--border-light);
+    background:var(--bg-page);
+}
+.admin-table td {
+    padding:11px 20px; font-size:13px;
+    color:var(--text-primary);
+    border-bottom:1px solid var(--border-light);
+}
+.admin-table tr:last-child td { border-bottom:none; }
+.admin-table tr:hover td { background:var(--bg-page); }
+
+/* ── Badges ────────────────────────────────────────────── */
+.badge-pill {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:3px 10px; border-radius:20px;
+    font-size:11px; font-weight:600;
+}
+.bp-green  { background:#dcfce7; color:#166534; }
+.bp-yellow { background:#fef9c3; color:#854d0e; }
+.bp-red    { background:#fee2e2; color:#991b1b; }
+.bp-blue   { background:#dbeafe; color:#1e40af; }
+.bp-gray   { background:#f3f4f6; color:#4b5563; }
+
+/* ── Avatar in table ───────────────────────────────────── */
+.tbl-avatar {
+    width:28px; height:28px; border-radius:50%;
+    background:var(--accent); color:#fff;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700;
+    margin-right:8px; vertical-align:middle;
+}
+
+/* ── Recent Activity ───────────────────────────────────── */
+.activity-list { padding:8px 0; }
+.activity-item {
+    display:flex; align-items:flex-start; gap:12px;
+    padding:10px 20px;
+    transition:background var(--transition);
+}
+.activity-item:hover { background:var(--bg-page); }
+.act-dot {
+    width:8px; height:8px; border-radius:50%;
+    flex-shrink:0; margin-top:5px;
+}
+.act-info { flex:1; }
+.act-text  { font-size:13px; color:var(--text-primary); }
+.act-text strong { font-weight:600; }
+.act-time  { font-size:11px; color:var(--text-muted); margin-top:2px; }
+
+/* ── Quick Actions ─────────────────────────────────────── */
+.quick-actions { padding:16px; display:flex; flex-direction:column; gap:8px; }
+.qa-btn {
+    display:flex; align-items:center; gap:10px;
+    padding:11px 14px;
+    border-radius:var(--radius-md);
+    font-size:13px; font-weight:500;
+    border:1px solid var(--border);
+    background:var(--bg-page);
+    color:var(--text-primary);
+    cursor:pointer;
+    transition:background var(--transition), border-color var(--transition);
+    text-decoration:none;
+}
+.qa-btn:hover { background:var(--accent-light); border-color:var(--accent); color:var(--accent); }
+.qa-btn i { font-size:14px; width:18px; text-align:center; }
+
+/* ── Top Posts mini list ───────────────────────────────── */
+.top-post-item {
+    display:flex; align-items:center; gap:12px;
+    padding:10px 20px;
+    border-bottom:1px solid var(--border-light);
+    transition:background var(--transition);
+}
+.top-post-item:last-child { border-bottom:none; }
+.top-post-item:hover { background:var(--bg-page); }
+.tp-rank {
+    width:22px; height:22px; border-radius:50%;
+    background:var(--accent-light); color:var(--accent);
+    font-size:11px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+}
+.tp-info { flex:1; min-width:0; }
+.tp-title { font-size:13px; font-weight:500; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tp-meta  { font-size:11px; color:var(--text-muted); margin-top:1px; }
+.tp-likes { font-size:12px; color:#f43f5e; font-weight:600; }
+
+/* ── Empty State ───────────────────────────────────────── */
+.empty-state { padding:28px 20px; text-align:center; color:var(--text-muted); font-size:13px; }
+.empty-state i { font-size:28px; margin-bottom:8px; display:block; opacity:.4; }
+
+/* ── Responsive ────────────────────────────────────────── */
+@media(max-width:1100px){ .admin-stats{ grid-template-columns:repeat(2,1fr); } }
+@media(max-width:900px) { .admin-grid,.admin-grid-3{ grid-template-columns:1fr; } }
+@media(max-width:600px) { .admin-stats{ grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Stat Cards ────────────────────────────────────────── -->
+<div class="admin-stats">
+    <div class="a-stat">
+        <div class="a-stat-icon ic-indigo"><i class="fas fa-users"></i></div>
+        <div class="a-stat-info">
+            <span class="a-stat-num">{{ total_users or 0 }}</span>
+            <span class="a-stat-lbl">Total Users</span>
+            <span class="a-stat-sub">+{{ new_users_today or 0 }} today</span>
+        </div>
+    </div>
+    <div class="a-stat">
+        <div class="a-stat-icon ic-emerald"><i class="fas fa-file-alt"></i></div>
+        <div class="a-stat-info">
+            <span class="a-stat-num">{{ total_posts or 0 }}</span>
+            <span class="a-stat-lbl">Total Posts</span>
+            <span class="a-stat-sub">{{ published_posts or 0 }} published</span>
+        </div>
+    </div>
+    <div class="a-stat">
+        <div class="a-stat-icon ic-sky"><i class="fas fa-comment-dots"></i></div>
+        <div class="a-stat-info">
+            <span class="a-stat-num">{{ total_comments or 0 }}</span>
+            <span class="a-stat-lbl">Comments</span>
+            <span class="a-stat-sub">Across all posts</span>
+        </div>
+    </div>
+    <div class="a-stat">
+        <div class="a-stat-icon ic-rose"><i class="fas fa-heart"></i></div>
+        <div class="a-stat-info">
+            <span class="a-stat-num">{{ total_likes or 0 }}</span>
+            <span class="a-stat-lbl">Total Likes</span>
+            <span class="a-stat-sub">Across all posts</span>
+        </div>
+    </div>
+</div>
+
+<!-- ── Recent Users + Recent Posts ──────────────────────── -->
+<div class="admin-grid">
+
+    <!-- Recent Users -->
+    <div class="sec-card">
+        <div class="sec-head">
+            <span class="sec-title">Recent Users</span>
+            <a href="/admin/users" class="sec-link">View all</a>
+        </div>
+        {% if recent_users %}
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Joined</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in recent_users %}
+                <tr>
+                    <td>
+                        <span class="tbl-avatar">{{ u.Username[0].upper() }}</span>
+                        {{ u.Username }}
+                    </td>
+                    <td>
+                        <span class="badge-pill {% if u.role == 'admin' %}bp-red{% elif u.role == 'author' %}bp-blue{% else %}bp-gray{% endif %}">
+                            {{ u.role | capitalize }}
+                        </span>
+                    </td>
+                    <td>{{ u.created_at.strftime('%b %d, %Y') if u.created_at else '—' }}</td>
+                    <td>
+                        <span class="badge-pill {% if u.is_verified %}bp-green{% else %}bp-yellow{% endif %}">
+                            {{ 'Verified' if u.is_verified else 'Pending' }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state"><i class="fas fa-users"></i>No users yet.</div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Posts -->
+    <div class="sec-card">
+        <div class="sec-head">
+            <span class="sec-title">Recent Posts</span>
+            <a href="/admin/posts" class="sec-link">View all</a>
+        </div>
+        {% if recent_posts %}
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in recent_posts %}
+                <tr>
+                    <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        {{ p.title }}
+                    </td>
+                    <td>{{ p.author.Username if p.author else '—' }}</td>
+                    <td>
+                        <span class="badge-pill {% if p.status == 'published' %}bp-green{% else %}bp-yellow{% endif %}">
+                            {{ p.status | capitalize }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state"><i class="fas fa-file-alt"></i>No posts yet.</div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- ── Top Posts + Quick Actions + Activity ─────────────── -->
+<div class="admin-grid-3">
+
+    <!-- Left: Top Posts + Recent Comments -->
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+        <!-- Top Posts -->
+        <div class="sec-card">
+            <div class="sec-head">
+                <span class="sec-title">Top Performing Posts</span>
+                <a href="/admin/posts" class="sec-link">View all</a>
+            </div>
+            {% if top_posts %}
+                {% for p in top_posts %}
+                <div class="top-post-item">
+                    <div class="tp-rank">{{ loop.index }}</div>
+                    <div class="tp-info">
+                        <div class="tp-title">{{ p.title }}</div>
+                        <div class="tp-meta">
+                            <i class="fas fa-comment" style="color:var(--text-muted);font-size:10px;"></i>
+                            {{ p.comments | length }} comments
+                        </div>
+                    </div>
+                    <span class="tp-likes"><i class="fas fa-heart"></i> {{ p.likes | length }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state"><i class="fas fa-chart-bar"></i>No data yet.</div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Comments -->
+        <div class="sec-card">
+            <div class="sec-head">
+                <span class="sec-title">Recent Comments</span>
+                <a href="/admin/comments" class="sec-link">View all</a>
+            </div>
+            <div class="activity-list">
+                {% if recent_comments %}
+                    {% for c in recent_comments %}
+                    <div class="activity-item">
+                        <div class="act-dot" style="background:var(--accent);"></div>
+                        <div class="act-info">
+                            <div class="act-text">
+                                <strong>{{ c.user.Username if c.user else 'Unknown' }}</strong>
+                                commented on
+                                <strong>{{ c.post.title if c.post else 'Unknown post' }}</strong>
+                            </div>
+                            <div class="act-text" style="color:var(--text-secondary); margin-top:2px;">
+                                "{{ c.content[:60] }}{% if c.content|length > 60 %}…{% endif %}"
+                            </div>
+                            <div class="act-time">
+                                {{ c.created_at.strftime('%b %d, %Y') if c.created_at else '' }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state"><i class="fas fa-comment-slash"></i>No comments yet.</div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right: Quick Actions -->
+    <div class="sec-card" style="align-self:start;">
+        <div class="sec-head">
+            <span class="sec-title">Quick Actions</span>
+        </div>
+        <div class="quick-actions">
+            <a href="/admin/users" class="qa-btn">
+                <i class="fas fa-users"></i> Manage Users
+            </a>
+            <a href="/admin/posts" class="qa-btn">
+                <i class="fas fa-file-alt"></i> Manage Posts
+            </a>
+            <a href="/admin/comments" class="qa-btn">
+                <i class="fas fa-comments"></i> Manage Comments
+            </a>
+            <a href="/admin/categories" class="qa-btn">
+                <i class="fas fa-tags"></i> Manage Categories
+            </a>
+        </div>
+    </div>
+    <a href="{{ url_for('admin_create_post') }}" class="btn btn-primary">
+                  <i class="fas fa-plus"></i> Create Post
+                </a>
+</div>
+
+{% endblock %}

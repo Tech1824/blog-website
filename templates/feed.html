@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+{% block title %}Explore Posts – BlogNest{% endblock %}
+{% block page_title %}Explore Posts{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Toolbar ─────────────────────────────────────────────── */
+.feed-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px; gap: 12px; flex-wrap: wrap;
+}
+.feed-toolbar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.filter-select {
+    padding: 7px 12px; border: 1px solid var(--border);
+    border-radius: var(--radius-md); font-size: 13px;
+    color: var(--text-primary); background: var(--bg-card); outline: none; cursor: pointer;
+}
+.filter-select:focus { border-color: var(--accent); }
+
+/* ── Search bar ──────────────────────────────────────────── */
+.feed-search {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 7px 12px;
+}
+.feed-search input {
+    border: none; outline: none; background: transparent;
+    font-size: 13px; color: var(--text-primary); width: 200px;
+}
+.feed-search i { color: var(--text-muted); font-size: 13px; }
+
+/* ── Grid ────────────────────────────────────────────────── */
+.feed-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+/* ── Post Card ───────────────────────────────────────────── */
+.post-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden; display: flex; flex-direction: column;
+    transition: box-shadow var(--transition), transform var(--transition);
+}
+.post-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
+
+.post-card-thumb {
+    width: 100%; height: 160px;
+    background: var(--bg-page);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden; flex-shrink: 0;
+}
+.post-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.post-card-thumb .thumb-placeholder {
+    font-size: 42px; color: var(--text-muted); opacity: .3;
+}
+
+.badge-cat {
+    position: absolute; top: 10px; left: 10px;
+    background: var(--accent); color: #fff;
+    font-size: 10px; font-weight: 700; letter-spacing: .05em;
+    padding: 3px 9px; border-radius: 20px; text-transform: uppercase;
+}
+
+.post-card-body {
+    padding: 14px; flex: 1;
+    display: flex; flex-direction: column; gap: 6px;
+}
+
+.post-card-title {
+    font-size: 15px; font-weight: 700; color: var(--text-primary);
+    line-height: 1.4; text-decoration: none;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+}
+.post-card-title:hover { color: var(--accent); }
+
+.post-card-excerpt {
+    font-size: 12px; color: var(--text-secondary); line-height: 1.5; flex: 1;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.post-card-meta {
+    display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px;
+}
+.meta-chip {
+    font-size: 11px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 4px;
+}
+
+.post-card-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-top: 1px solid var(--border-light);
+}
+
+.author-chip {
+    display: flex; align-items: center; gap: 7px;
+}
+.author-avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+}
+.author-name { font-size: 12px; color: var(--text-secondary); }
+
+.read-btn {
+    padding: 5px 14px; border-radius: var(--radius-md);
+    background: var(--accent); color: #fff;
+    font-size: 12px; font-weight: 600; border: none;
+    cursor: pointer; text-decoration: none;
+    transition: opacity var(--transition);
+    display: inline-flex; align-items: center; gap: 5px;
+}
+.read-btn:hover { opacity: .85; }
+
+/* ── Engagement pills ────────────────────────────────────── */
+.engage-row {
+    display: flex; gap: 10px; margin-top: 2px;
+}
+.eng-pill {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 11px; color: var(--text-muted);
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+.empty-state {
+    grid-column: 1 / -1; text-align: center;
+    padding: 64px 20px; color: var(--text-muted);
+}
+.empty-state i { font-size: 48px; margin-bottom: 16px; display: block; opacity: .3; }
+.empty-state h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+.empty-state p  { font-size: 13px; }
+
+@media (max-width: 640px) {
+    .feed-grid { grid-template-columns: 1fr; }
+    .feed-search input { width: 140px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Toolbar -->
+<div class="feed-toolbar">
+    <div class="feed-toolbar-left">
+        <!-- Category filter -->
+        <select class="filter-select" id="catFilter" onchange="applyFilters()">
+            <option value="">All Categories</option>
+            {% set seen_cats = [] %}
+            {% for post in posts %}
+                {% if post.category and post.category.name not in seen_cats %}
+                    <option value="{{ post.category.name }}">{{ post.category.name }}</option>
+                    {% if seen_cats.append(post.category.name) %}{% endif %}
+                {% endif %}
+            {% endfor %}
+        </select>
+
+        <!-- Sort -->
+        <select class="filter-select" id="sortFilter" onchange="applyFilters()">
+            <option value="newest">Newest first</option>
+            <option value="popular">Most liked</option>
+        </select>
+
+        <span style="font-size:13px; color:var(--text-muted);" id="postCount">
+            {{ posts | length }} post{{ 's' if posts | length != 1 }}
+        </span>
+    </div>
+
+    <!-- Search -->
+    <div class="feed-search">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search posts…" oninput="applyFilters()">
+    </div>
+</div>
+
+<!-- Post Grid -->
+<div class="feed-grid" id="feedGrid">
+
+    {% if posts %}
+        {% for post in posts %}
+        <div class="post-card"
+             data-title="{{ post.title | lower }}"
+             data-category="{{ post.category.name if post.category else '' }}"
+             data-likes="{{ post.likes | length }}"
+             data-date="{{ post.created_at.timestamp() if post.created_at else 0 }}">
+
+            <!-- Thumbnail -->
+            <div class="post-card-thumb">
+                {% if post.thumbnail %}
+                    <img src="{{ post.thumbnail }}" alt="{{ post.title }}">
+                {% else %}
+                    <i class="fas fa-file-alt thumb-placeholder"></i>
+                {% endif %}
+                {% if post.category %}
+                    <span class="badge-cat">{{ post.category.name }}</span>
+                {% endif %}
+            </div>
+
+            <!-- Body -->
+            <div class="post-card-body">
+                <a href="/post/{{ post.Id }}" class="post-card-title">{{ post.title }}</a>
+                <p class="post-card-excerpt">
+                    {{ post.excerpt if post.excerpt else post.content[:120] ~ '…' }}
+                </p>
+                <div class="post-card-meta">
+                    <span class="meta-chip">
+                        <i class="fas fa-calendar-alt"></i>
+                        {{ post.created_at.strftime('%b %d, %Y') if post.created_at else '—' }}
+                    </span>
+                    <span class="meta-chip">
+                        <i class="fas fa-clock"></i>
+                        {{ [1, (post.content.split()|length // 200)] | max }} min read
+                    </span>
+                </div>
+                <div class="engage-row">
+                    <span class="eng-pill">
+                        <i class="fas fa-heart" style="color:#f43f5e;"></i>
+                        {{ post.likes | length }}
+                    </span>
+                    <span class="eng-pill">
+                        <i class="fas fa-comment" style="color:var(--accent);"></i>
+                        {{ post.comments | length }}
+                    </span>
+                    <span class="eng-pill">
+                        <i class="fas fa-bookmark" style="color:#f59e0b;"></i>
+                        {{ post.bookmarks | length }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="post-card-footer">
+                <div class="author-chip">
+                    <div class="author-avatar">
+                        {{ post.author.Username[0].upper() if post.author else '?' }}
+                    </div>
+                    <span class="author-name">
+                        {{ post.author.Username if post.author else 'Unknown' }}
+                    </span>
+                </div>
+                <a href="/post/{{ post.Id }}" class="read-btn">
+                    <i class="fas fa-book-open"></i> Read
+                </a>
+            </div>
+
+        </div>
+        {% endfor %}
+
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-newspaper"></i>
+            <h3>No posts yet</h3>
+            <p>Check back soon — new articles are on their way.</p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function applyFilters() {
+    const cat    = document.getElementById('catFilter').value.toLowerCase();
+    const sort   = document.getElementById('sortFilter').value;
+    const search = document.getElementById('searchInput').value.toLowerCase();
+
+    const cards = [...document.querySelectorAll('#feedGrid .post-card')];
+
+    // Filter
+    let visible = cards.filter(card => {
+        const matchCat    = !cat    || card.dataset.category.toLowerCase() === cat;
+        const matchSearch = !search || card.dataset.title.includes(search);
+        const show = matchCat && matchSearch;
+        card.style.display = show ? '' : 'none';
+        return show;
+    });
+
+    // Sort visible cards
+    visible.sort((a, b) => {
+        if (sort === 'popular') {
+            return parseInt(b.dataset.likes) - parseInt(a.dataset.likes);
+        }
+        return parseFloat(b.dataset.date) - parseFloat(a.dataset.date);
+    });
+
+    // Re-append in sorted order
+    const grid = document.getElementById('feedGrid');
+    visible.forEach(card => grid.appendChild(card));
+
+    // Update count
+    document.getElementById('postCount').textContent =
+        `${visible.length} post${visible.length !== 1 ? 's' : ''}`;
+}
+</script>
+{% endblock %}
